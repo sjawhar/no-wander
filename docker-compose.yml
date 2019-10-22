@@ -8,7 +8,7 @@ services:
       DISPLAY:
       XAUTHORITY: /tmp/.docker.xauth
     volumes:
-      - ./app:/home/muselsl
+      - ./app:/home/muselsl/app
       - /tmp/.docker.xauth:/tmp/.docker.xauth
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ${HOME}/.config/muselsl/bluetooth:/etc/bluetooth
@@ -16,5 +16,5 @@ services:
       - ${HOME}/.config/muselsl/devices:/var/lib/bluetooth
     network_mode: host
     privileged: true
-    entrypoint: [python3, record.py]
-    command: [-a, 00:55:DA:B5:4D:13, "10"]
+    entrypoint: [python3, app/record.py]
+    command: [--duration, '20']

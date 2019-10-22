@@ -1,7 +1,7 @@
 FROM sjawhar/muselsl
 
 USER root
-RUN DEV_PACKAGES="\
+RUN DEV_PACKAGES=" \
         python3-pip \
     " \
  && apt-get update \
@@ -10,9 +10,11 @@ RUN DEV_PACKAGES="\
  && apt-get install -y $DEV_PACKAGES \
  && pip3 install \
         psychopy \
- && apt-get remove -y $DEV_PACKAGES \
- && apt-get autoremove -y \
+        pygame \
+ && apt-get purge -y --auto-remove $DEV_PACKAGES \
  && rm -rf /var/lib/apt/lists/* \
  && rm -rf /root/.cache
+
+RUN usermod -a -G audio muselsl
 
 USER muselsl

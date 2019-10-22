@@ -1,115 +1,171 @@
 import argparse
+import logging
 from multiprocessing import Process
-from muselsl import list_muses, record, stream
-from os import path
-from psychopy import core, event, visual
+from muselsl import list_muses, record, stream, view
+from pathlib import Path
+from psychopy import core, event, sound, visual
 from pylsl import StreamInfo, StreamOutlet, IRREGULAR_RATE
 from time import gmtime, sleep, strftime, time
 
+
 ATTEMPTS_MAX = 5
-KEYS_QUIT = ['q']
-VALUE_QUIT = 2
+KEYS_QUIT = ['esc', 'q']
+SOUND_BELL = (Path(__file__).parent / 'assets' / 'bell.wav').resolve()
+VALUE_END = 2
 VALUE_RESPONSE = 1
+
+logger = logging.getLogger(__name__)
+
 
 def start_stream(address):
     if address is None:
-        # TODO: Debug log searching for muses
+        logger.info('No address provided, searching for muses...')
         muses = list_muses()
         if not muses or len(muses) == 0:
-            # TODO: Debug log none found
+            logger.error('No muses found, quitting.')
             exit(1)
-        # TODO: Debug log muse found
         address = muses[0]['address']
+        logger.debug(f'Found muse with address {address}.')
 
-    stream_process = Process(target=stream, args=(address,))
-    stream_process.daemon = True
+    keep_trying = True
+    while keep_trying:
+        keep_trying = False
+        logger.info(f'Establishing stream to {address}...')
+        attempt = 0
+        while attempt < ATTEMPTS_MAX:
+            attempt += 1
+            logger.info(f'Beginning stream attempt {attempt}...')
+            stream_process = Process(target=stream, args=(address,))
+            stream_process.daemon = True
+            stream_process.start()
+            stream_process.join(7)
+            if stream_process.is_alive():
+                logger.info('Stream established!')
+                return True
+            logger.warning(f'Streaming attempt {attempt} failed.')
 
-    attempts = 0
-    while attempts < ATTEMPTS_MAX:
-        # TODO: Log attempts
-        stream_process.start()
-        stream_process.join(10)
-        if stream_process.is_alive():
-            return True
-        attempts += 1
+        logger.error(f'Could not establish stream after {attempt} attempts.')
+        keep_trying = str.lower(input('Keep trying? (y/N) ')) in ['y', 'yes']
 
     return False
 
-def record_input(duration, source_id):
-    info = StreamInfo(
-        name='Markers', 
-        type='Markers', 
-        channel_count=1, 
-        nominal_srate=IRREGULAR_RATE, 
-        channel_format='int32', 
-        source_id=source_id,
-    )
-    outlet = StreamOutlet(info)
 
-    trial_window = visual.Window(fullscr=True, color=-1)
-    text = visual.TextStim(trial_window, "If you can read this, you're not meditating!", color=[1,1,1])
-    text.draw()
-    trial_window.flip()
+def get_duration(duration=None):
+    while type(duration) is not int:
+        try:
+            duration = input('For how many minutes should the session run? ')
+            duration = int(duration)
+        except:
+            logger.error(f'Invalid input {duration}')
 
+    return duration * 60
+
+
+def visualize():
+    view(version=2)
+
+
+def capture_input(duration, record_process, outlet):
     start_time = time()
     clock = core.Clock()
     clock.reset(-start_time)
     end_time = start_time + duration
     time_left = duration
 
+    logger.info(f'Running session for {duration} seconds')
+    logger.debug(f'Session to run from {start_time} to {end_time}')
     while time_left > 0:
+        if not record_process.is_alive():
+            logger.error('Recording ended abnormally')
+            break
+
         keys = event.waitKeys(
             maxWait=time_left,
             timeStamped=clock,
         )
         if keys is None:
-            # TODO: Debug log wait expired
+            logger.debug('Session time expired')
             break
 
         key, timestamp = keys[0]
-        # TODO: Debug log keys
-        value = VALUE_QUIT if key in KEYS_QUIT else VALUE_RESPONSE
+        logger.debug(f'{key} pressed at time {timestamp}')
+        value = VALUE_END if key in KEYS_QUIT else VALUE_RESPONSE
         outlet.push_sample([value], timestamp)
 
-        if value == VALUE_QUIT:
-            # TODO: Debug log quit
+        if value == VALUE_END:
+            logger.info(f'{key} pressed, ending session')
             break
         time_left = end_time - clock.getTime()
 
-    # TODO: Debug log trial complete
-    trial_window.close()
+    record_process.join(max(time_left, 10))
+    logger.info('Session ended')
 
 
-def main(duration, filename, address=None):
-    if not start_stream(address):
-        exit(1)
+def run_session(duration, filename):
+    info = StreamInfo(
+        name='Markers',
+        type='Markers',
+        channel_count=1,
+        nominal_srate=IRREGULAR_RATE,
+        channel_format='int32',
+        source_id=filename.name,
+    )
+    outlet = StreamOutlet(info)
 
-    record_process = Process(target=record, args=(duration, path.abspath(filename)))
+    record_process = Process(target=record, args=(duration, filename.resolve()))
     record_process.daemon = True
     record_process.start()
 
-    record_input(duration, filename)
-    record_process.join()
+    session_window = visual.Window(fullscr=True, color=-1)
+    text = visual.TextStim(session_window, "If you can read this, you're not meditating!", color=[1,1,1])
+    text.draw()
+    session_window.flip()
+
+    capture_input(duration, record_process, outlet)
+
+    bell = sound.Sound(value=SOUND_BELL)
+    bell.play()
+    core.wait(bell.getDuration())
+    session_window.close()
     core.quit()
+
+
+def main(args):
+    if not start_stream(args.address):
+        exit(1)
+
+    duration = get_duration(args.duration)
+    visualize()
+    filename = Path(__file__).parent / args.filename
+    run_session(duration, filename)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Capture meditation session')
     parser.add_argument(
-        'duration', 
-        metavar='DURATION', 
-        type=int, 
-        help='length of the meditation session',
+        '-d', '--duration',
+        type=int,
+        help='Length of the meditation session in minutes',
     )
     parser.add_argument(
         '-f', '--filename',
         default="data/" + strftime("%Y-%m-%d_%H-%M-%S", gmtime()) + ".csv",
-        help='filename where recording should be saved',
+        help='Filename where recording should be saved',
     )
     parser.add_argument(
         '-a', '--address',
-        help='skip search and connect to specified address',
+        help='Skip search and stream from specified address',
+    )
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        default=False,
+        help='Enable verbose logging',
     )
 
     args = parser.parse_args()
-    # TODO: Debug log args
-    main(args.duration, args.filename, args.address)
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+
+    logger.debug(f'Received args {args}')
+    main(args)
