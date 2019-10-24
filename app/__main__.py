@@ -18,7 +18,6 @@ def main(args):
     if not start_stream(args.address):
         exit(1)
     if not args.skip_visualize:
-        # TODO: Automatically determine stability
         visualize()
 
     run_session(duration, filepath)
@@ -44,7 +43,7 @@ if __name__ == '__main__':
         '-s', '--skip-visualize',
         action='store_true',
         default=False,
-        help='Enable verbose logging',
+        help='Skip visualization and stability check',
     )
     parser.add_argument(
         '-v', '--verbose',

@@ -36,6 +36,9 @@ def start_stream(address):
         while attempt < STREAM_ATTEMPTS_MAX:
             attempt += 1
             logger.info(f'Beginning stream attempt {attempt}...')
+            # TODO: Option to include PPG
+            # TODO: Option to include ACC
+            # TODO: Option to include GYRO
             stream_process = Process(target=stream, args=(address,))
             stream_process.daemon = True
             stream_process.start()
@@ -123,6 +126,7 @@ def run_session(duration, filepath):
     session_window.flip()
     play_bell()
 
+    # TODO: Chunk recording into 5 minute segments
     record_process = Process(target=record, args=(duration, str(filepath.resolve())))
     record_process.start()
     capture_input(duration, outlet, record_process)
