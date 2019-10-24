@@ -30,6 +30,7 @@ class Canvas(MuseCanvas):
         self.quality_count = 0
         super().__init__(lsl_inlet, scale, filt)
 
+
     def on_draw(self, event):
         max_quality = max(float(q.text) for q in self.quality)
         logger.debug('Signal quality is %.2f' % max_quality)

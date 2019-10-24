@@ -1,19 +1,19 @@
 import logging
 from multiprocessing import Process
 from muselsl import list_muses, record, stream
-from pathlib import Path
+from pathlib import Path, PurePath
 from psychopy import core, event, sound, visual
 from pylsl import StreamInfo, StreamOutlet, IRREGULAR_RATE
 from time import sleep, time
-from .constants import (
-    PACKAGE_NAME,
-    RECORD_KEYS_QUIT,
-    RECORD_VALUE_END,
-    RECORD_VALUE_RESPONSE,
-    SOUND_BELL,
-    STREAM_ATTEMPTS_MAX,
-)
+from .constants import PACKAGE_NAME
 
+RECORD_CHUNK_DURATION_MAX = 300
+RECORD_CHUNK_DURATION_MIN = 10
+RECORD_KEYS_QUIT = ['esc', 'q']
+RECORD_VALUE_END = 2
+RECORD_VALUE_RESPONSE = 1
+SOUND_BELL = (Path(__file__).parent / 'assets' / 'bell.wav').resolve()
+STREAM_ATTEMPTS_MAX = 5
 
 logger = logging.getLogger(PACKAGE_NAME + '.' + __name__)
 
@@ -65,7 +65,7 @@ def get_duration(duration=None):
     return duration * 60
 
 
-def capture_input(duration, outlet, record_process):
+def capture_input(duration, outlet):
     start_time = time()
     clock = core.Clock()
     clock.reset(-start_time)
@@ -74,12 +74,7 @@ def capture_input(duration, outlet, record_process):
 
     logger.info(f'Running session for {duration} seconds')
     logger.debug(f'Session to run from {start_time} to {end_time}')
-    outlet.push_sample([0], start_time)
     while time_left > 0:
-        if not record_process.is_alive():
-            logger.error('Recording ended abnormally')
-            break
-
         keys = event.waitKeys(
             maxWait=time_left,
             timeStamped=clock,
@@ -109,6 +104,37 @@ def play_bell():
     except:
         logger.error('Could not play bell sound')
 
+
+def record_chunks(duration, filepath, outlet):
+    remaining = duration
+    start_time = time()
+    i = 0
+    filename_parts = filepath.name.split('.')
+    filename_parts.insert(1, '')
+    while remaining > RECORD_CHUNK_DURATION_MIN:
+        chunk_duration = min(remaining, RECORD_CHUNK_DURATION_MAX)
+        filename_parts[1] = str(i)
+        chunk_filename = PurePath(filepath.parent) / '.'.join(filename_parts)
+        record_process = Process(target=record, args=(chunk_duration, str(chunk_filename)))
+
+        logger.info(f'Starting chunk {i+1} at {time()} for {chunk_duration} seconds')
+        record_process.start()
+
+        # # TODO: Push dummy sample to preserve recording if no responses
+        # record_process.join(5)
+        # dummy_timestamp = time()
+        # logger.debug(f'Pushing dummy sample at {dummy_timestamp}')
+        # outlet.push_sample([RECORD_VALUE_END], dummy_timestamp)
+
+        record_process.join(chunk_duration + 10)
+        if record_process.is_alive():
+            record_process.terminate()
+
+        remaining = duration + start_time - time()
+        logger.debug('%.1f seconds left in recording' % remaining)
+        i += 1
+
+
 def run_session(duration, filepath):
     info = StreamInfo(
         name='Markers',
@@ -126,10 +152,9 @@ def run_session(duration, filepath):
     session_window.flip()
     play_bell()
 
-    # TODO: Chunk recording into 5 minute segments
-    record_process = Process(target=record, args=(duration, str(filepath.resolve())))
+    record_process = Process(target=record_chunks, args=(duration, filepath, outlet))
     record_process.start()
-    capture_input(duration, outlet, record_process)
+    capture_input(duration, outlet)
 
     session_window.close()
     play_bell()

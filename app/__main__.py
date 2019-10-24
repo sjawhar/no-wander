@@ -13,7 +13,7 @@ logging.info(PACKAGE_NAME)
 
 def main(args):
     duration = get_duration(args.duration)
-    filepath = Path(__file__).parent / args.filename
+    filepath = (Path(__file__).parent / args.filename).resolve()
 
     if not start_stream(args.address):
         exit(1)
