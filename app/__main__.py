@@ -15,12 +15,14 @@ def main(args):
     duration = get_duration(args.duration)
     filepath = (Path(__file__).parent / args.filename).resolve()
 
-    if not start_stream(args.address):
+    stream_manager = start_stream(args.address)
+    if not stream_manager:
         exit(1)
     if not args.skip_visualize:
         visualize()
 
-    run_session(duration, filepath)
+    run_session(duration, filepath, stream_manager)
+    stream_manager(False)
 
 
 if __name__ == '__main__':
@@ -51,6 +53,7 @@ if __name__ == '__main__':
         default=False,
         help='Enable verbose logging',
     )
+    # TODO: Test switch for different data dir
 
     args = parser.parse_args()
     logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
