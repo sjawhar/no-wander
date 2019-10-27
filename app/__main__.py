@@ -34,7 +34,6 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '-f', '--filename',
-        default="data/" + strftime("%Y-%m-%d_%H-%M-%S", gmtime()) + ".csv",
         help='Filename where recording should be saved',
     )
     parser.add_argument(
@@ -53,9 +52,20 @@ if __name__ == '__main__':
         default=False,
         help='Enable verbose logging',
     )
-    # TODO: Test switch for different data dir
+    parser.add_argument(
+        '-t', '--test',
+        action='store_true',
+        default=False,
+        help='Store data in test directory',
+    )
 
     args = parser.parse_args()
     logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
+    if args.filename and args.test:
+        raise ValueError('Cannot use both filename and test flags at the same time.')
+    elif not args.filename:
+        data_dir = "test" if args.test else "prod"
+        args.filename = f'data/{data_dir}/{strftime("%Y-%m-%d_%H-%M-%S", gmtime())}.csv'
+
     logger.debug(f'Received args {args}')
     main(args)
