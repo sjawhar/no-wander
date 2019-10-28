@@ -1,5 +1,5 @@
 import logging
-from multiprocessing import Process
+from multiprocessing import Process, Pipe
 from pathlib import Path
 from psychopy import core, sound, visual
 from pylsl import StreamInfo, StreamOutlet, IRREGULAR_RATE
@@ -53,12 +53,13 @@ def run_session(duration, sources, filepath, stream_manager):
     session_window.flip()
     play_bell()
 
+    record_conn, input_conn = Pipe()
     record_process = Process(
         target=record_chunks,
-        args=(duration, sources, filepath, stream_manager, outlet),
+        args=(duration, sources, filepath, stream_manager, record_conn),
     )
     record_process.start()
-    capture_input(duration, outlet)
+    capture_input(duration, outlet, input_conn)
 
     session_window.close()
     play_bell()

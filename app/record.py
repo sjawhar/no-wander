@@ -16,7 +16,7 @@ VALUE_RESPONSE = 1
 logger = logging.getLogger(PACKAGE_NAME + '.' + __name__)
 
 
-def capture_input(duration, outlet):
+def capture_input(duration, outlet, conn):
     start_time = time()
     clock = core.Clock()
     clock.reset(-start_time)
@@ -41,13 +41,15 @@ def capture_input(duration, outlet):
 
         if value == VALUE_END:
             logger.info(f'{key} pressed, ending session')
+            conn.send(VALUE_END)
             break
         time_left = end_time - clock.getTime()
 
+    conn.close()
     logger.info('Session ended')
 
 
-def record_chunks(duration, sources, filepath, stream_manager, outlet):
+def record_chunks(duration, sources, filepath, stream_manager, conn):
     filename_parts = filepath.name.split('.')
     filename_parts = filename_parts[:-1] + [''] * 2 + filename_parts[-1:]
     start_time = time()
@@ -79,9 +81,10 @@ def record_chunks(duration, sources, filepath, stream_manager, outlet):
         # record_processes[0].join(5)
         # dummy_timestamp = time()
         # logger.debug(f'Pushing dummy sample at {dummy_timestamp}')
-        # outlet.push_sample([VALUE_END], dummy_timestamp)
+        # conn.send([VALUE_START, dummy_timestamp])
 
         record_processes[0].join(chunk_duration + 10)
+        sleep(2)
         for si in range(len(sources)):
             if record_processes[si].is_alive():
                 logger.warning(f'{sources[si]} recording process has idled. Terminating...')
@@ -89,7 +92,10 @@ def record_chunks(duration, sources, filepath, stream_manager, outlet):
 
         chunk_time = remaining - get_remaining()
         logger.debug(f'Chunk {chunk_num} took {chunk_time} seconds')
-        if chunk_time < chunk_duration:
+        if conn.recv() == VALUE_END:
+            logger.info('Session end signal received. Ending...')
+            break
+        elif chunk_time < chunk_duration:
             logger.warning('Error in stream. Restarting...')
             stream_manager = stream_manager()
             logger.info('Stream restarted')
@@ -97,3 +103,5 @@ def record_chunks(duration, sources, filepath, stream_manager, outlet):
         remaining = get_remaining()
         logger.debug('%.1f seconds left in recording' % remaining)
         chunk_num += 1
+
+    conn.close()
