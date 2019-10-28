@@ -1,16 +1,15 @@
 import argparse
 import logging
 from .constants import PACKAGE_NAME
-from .record import (
-    get_duration,
-    run_session,
+from .session import get_duration, run_session
+from .stream import (
     start_stream,
+    visualize,
     SOURCE_ACC,
     SOURCE_EEG,
     SOURCE_GYRO,
     SOURCE_PPG,
 )
-from .viewer import visualize
 from pathlib import Path
 from time import gmtime, strftime
 
@@ -103,6 +102,8 @@ if __name__ == '__main__':
         data_dir = "test" if args.test else "prod"
         args.filename = f'data/{data_dir}/{strftime("%Y-%m-%d_%H-%M-%S", gmtime())}.csv'
 
+    if not args.sources:
+        args.sources = []
     if args.eeg:
         args.sources.append(SOURCE_EEG)
 
