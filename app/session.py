@@ -12,7 +12,7 @@ from .constants import (
 )
 
 
-MARKER_DUMMY = 0
+MARKER_EMPTY = 0
 MARKER_END = 2
 MARKER_RECOVER = 1
 SOUND_BELL = (Path(__file__).parent / 'assets' / 'bell.wav').resolve()
@@ -43,11 +43,14 @@ def play_bell():
 def handle_signals_event(event, outlet):
     logger.debug(f'Received {event} from signal recording')
     if event[0] == EVENT_RECORD_CHUNK_START:
-        logger.debug(f'Pushing dummy sample at {event[1]}')
-        outlet.push_sample([MARKER_DUMMY], event[1])
+        # muselsl.record throws an exception if marker stream contains no samples
+        # Insert empty sample to ensure recording file is saved properly
+        logger.debug(f'Pushing empty sample at {event[1]}')
+        outlet.push_sample([MARKER_EMPTY], event[1])
 
 
 def handle_input_event(event, outlet):
+    """Return False to indicate recording should be ended, otherwise True"""
     logger.debug(f'Received {event} from input recording')
     if event[0] == EVENT_SESSION_END:
         outlet.push_sample([MARKER_END], event[1])
@@ -90,12 +93,12 @@ def run_session(duration, sources, filepath, stream_manager):
     input_queue = Queue()
     input_process = Process(
         target=record_input,
-        args=(duration, input_queue),
+        args=(input_queue),
     )
     input_process.daemon = True
     input_process.start()
 
-    while signals_process.is_alive() or input_process.is_alive():
+    while signals_process.is_alive():
         try:
             if signals_conn.poll():
                 handle_signals_event(signals_conn.recv(), outlet)
@@ -110,10 +113,11 @@ def run_session(duration, sources, filepath, stream_manager):
         except KeyboardInterrupt:
             break
 
-    signals_conn.close()
-    session_window.close()
     play_bell()
+    session_window.close()
 
+    input_process.terminate()
     if signals_process.is_alive():
         signals_process.terminate()
+    signals_conn.close()
     core.quit()
