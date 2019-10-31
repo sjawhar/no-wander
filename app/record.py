@@ -1,12 +1,14 @@
 import logging
 from multiprocessing import Process
-from muselsl import list_muses, record
+from muselsl import record
 from pathlib import PurePath
 from psychopy import core, event
 from time import sleep, time
 from .constants import (
     EVENT_RECORD_CHUNK_START,
     EVENT_SESSION_END,
+    EVENT_STREAMING_ERROR,
+    EVENT_STREAMING_RESTARTED,
     EVENT_USER_RECOVER,
     PACKAGE_NAME,
 )
@@ -41,7 +43,7 @@ def record_input(queue):
     queue.close()
 
 
-def record_signals(duration, sources, filepath, stream_manager, conn):
+def record_signals(duration, sources, filepath, conn):
     filename_parts = filepath.name.split('.')
     # Filename format: NAME.SOURCE.CHUNK_NUM.EXT
     filename_parts = filename_parts[:-1] + [''] * 2 + filename_parts[-1:]
@@ -83,8 +85,9 @@ def record_signals(duration, sources, filepath, stream_manager, conn):
             logger.warning('Error in stream. Restarting...')
             for process in record_processes:
                 process.terminate()
-            stream_manager = stream_manager()
-            logger.info('Stream restarted')
+            conn.send([EVENT_STREAMING_ERROR])
+            # Wait for signal that stream has been restarted
+            conn.recv()
             remaining = get_remaining()
             continue
 

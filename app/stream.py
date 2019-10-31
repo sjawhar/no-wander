@@ -1,6 +1,6 @@
 import logging
 from multiprocessing import Process
-from muselsl import stream
+from muselsl import list_muses, stream
 from muselsl.constants import LSL_SCAN_TIMEOUT, LSL_EEG_CHUNK
 from muselsl.viewer_v2 import Canvas as MuseCanvas
 from pylsl import resolve_byprop, StreamInlet
@@ -17,9 +17,29 @@ SOURCE_GYRO = 'GYRO'
 SOURCE_PPG = 'PPG'
 
 logger = logging.getLogger(PACKAGE_NAME + '.' + __name__)
+stream_data = {
+    'args': [],
+    'process': None,
+}
 
 
-def start_stream(address, sources, confirm=True):
+def end_stream():
+    if stream_data['process'] is None:
+        logger.debug('No stream process to kill')
+        return
+
+    stream_process = stream_data['process']
+    stream_data['process'] = None
+    logger.debug(f'Stream process alive: {stream_process.is_alive()}')
+    stream_process.terminate()
+
+
+def start_stream(address, sources, confirm=True, restart=False):
+    """Return True to indicate success, else False"""
+    if restart is True:
+        end_stream()
+        (address, sources) = stream_data['args']
+
     if address is None:
         logger.info('No address provided, searching for muses...')
         muses = list_muses()
@@ -29,6 +49,7 @@ def start_stream(address, sources, confirm=True):
         address = muses[0]['address']
         logger.debug(f'Found muse with address {address}.')
 
+    stream_data['args'] = (address, sources)
     kwargs = {
         'acc_enabled': SOURCE_ACC in sources,
         'eeg_disabled': SOURCE_EEG not in sources,
@@ -50,13 +71,9 @@ def start_stream(address, sources, confirm=True):
                 logger.warning(f'Streaming attempt {attempt} failed.')
                 continue
 
-            def stream_manager(restart=True):
-                logger.debug(f'Stream process alive: {stream_process.is_alive()}')
-                stream_process.terminate()
-                return start_stream(address, sources, False) if restart else False
-
             logger.info('Stream established!')
-            return stream_manager
+            stream_data['process'] = stream_process
+            return True
 
         logger.error(f'Could not establish stream after {attempt} attempts.')
         if not confirm:
@@ -64,6 +81,7 @@ def start_stream(address, sources, confirm=True):
         keep_trying = str.lower(input('Keep trying? (y/N) ')) in ['y', 'yes']
 
     return False
+
 
 def visualize():
     logger.info("Looking for an EEG stream...")

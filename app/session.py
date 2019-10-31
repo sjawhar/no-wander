@@ -4,9 +4,12 @@ from pathlib import Path
 from psychopy import core, sound, visual
 from pylsl import StreamInfo, StreamOutlet, IRREGULAR_RATE
 from .record import record_input, record_signals
+from .stream import start_stream
 from .constants import (
     EVENT_RECORD_CHUNK_START,
     EVENT_SESSION_END,
+    EVENT_STREAMING_ERROR,
+    EVENT_STREAMING_RESTARTED,
     EVENT_USER_RECOVER,
     PACKAGE_NAME,
 )
@@ -41,12 +44,20 @@ def play_bell():
 
 
 def handle_signals_event(event, outlet):
+    """Return message to pass back to signal process, else None"""
     logger.debug(f'Received {event} from signal recording')
+    if event[0] == EVENT_STREAMING_ERROR:
+        start_stream(None, None, confirm=False, restart=True)
+        logger.info('Stream restarted')
+        return [EVENT_STREAMING_RESTARTED]
+
     if event[0] == EVENT_RECORD_CHUNK_START:
         # muselsl.record throws an exception if marker stream contains no samples
         # Insert empty sample to ensure recording file is saved properly
         logger.debug(f'Pushing empty sample at {event[1]}')
         outlet.push_sample([MARKER_EMPTY], event[1])
+
+    return None
 
 
 def handle_input_event(event, outlet):
@@ -62,7 +73,7 @@ def handle_input_event(event, outlet):
     return True
 
 
-def run_session(duration, sources, filepath, stream_manager):
+def run_session(duration, sources, filepath):
     info = StreamInfo(
         name='Markers',
         type='Markers',
@@ -86,14 +97,14 @@ def run_session(duration, sources, filepath, stream_manager):
     signals_conn, conn = Pipe()
     signals_process = Process(
         target=record_signals,
-        args=(duration, sources, filepath, stream_manager, conn),
+        args=(duration, sources, filepath, conn),
     )
     signals_process.start()
 
     input_queue = Queue()
     input_process = Process(
         target=record_input,
-        args=(input_queue),
+        args=(input_queue,),
     )
     input_process.daemon = True
     input_process.start()
@@ -101,9 +112,12 @@ def run_session(duration, sources, filepath, stream_manager):
     while signals_process.is_alive():
         try:
             if signals_conn.poll():
-                handle_signals_event(signals_conn.recv(), outlet)
+                event = handle_signals_event(signals_conn.recv(), outlet)
+                if event:
+                    signals_conn.send(event)
             if not input_queue.empty():
-                if handle_input_event(input_queue.get_nowait(), outlet):
+                event = input_queue.get_nowait()
+                if handle_input_event(event, outlet):
                     continue
                 logger.info(f'Triggering end of session at {event[1]}')
                 signals_conn.send([EVENT_SESSION_END])

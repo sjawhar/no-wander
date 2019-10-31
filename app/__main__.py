@@ -3,6 +3,7 @@ import logging
 from .constants import PACKAGE_NAME
 from .session import get_duration, run_session
 from .stream import (
+    end_stream,
     start_stream,
     visualize,
     SOURCE_ACC,
@@ -22,15 +23,13 @@ def main(args):
     duration = get_duration(args.duration)
     filepath = (Path(__file__).parent / args.filename).resolve()
 
-    stream_manager = start_stream(args.address, args.sources)
-    if not stream_manager:
+    if not start_stream(args.address, args.sources):
         exit(1)
     if not args.skip_visualize:
         visualize()
 
-    run_session(duration, args.sources, filepath, stream_manager)
-    stream_manager(False)
-
+    run_session(duration, args.sources, filepath)
+    end_stream()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Capture meditation session')
