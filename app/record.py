@@ -2,45 +2,20 @@ import logging
 from multiprocessing import Process
 from muselsl import record
 from pathlib import PurePath
-from psychopy import core, event
 from time import sleep, time
 from .constants import (
     EVENT_RECORD_CHUNK_START,
     EVENT_SESSION_END,
     EVENT_STREAMING_ERROR,
     EVENT_STREAMING_RESTARTED,
-    EVENT_USER_RECOVER,
     PACKAGE_NAME,
 )
 
 
-CHUNK_DURATION_BUFFER = 5
 CHUNK_DURATION_MAX = 300
 CHUNK_DURATION_MIN = 10
-KEYS_QUIT = ['esc', 'q']
 
 logger = logging.getLogger(PACKAGE_NAME + '.' + __name__)
-
-
-def record_input(queue):
-    """Captures user input during session. Runs forever, must be terminated by session manager."""
-    start_time = time()
-    logger.debug(f'Starting input recording at {start_time}')
-
-    clock = core.Clock()
-    clock.reset(-start_time)
-    while True:
-        key, timestamp = event.waitKeys(timeStamped=clock)[0]
-        logger.debug(f'{key} pressed at time {timestamp}')
-        if key in KEYS_QUIT:
-            logger.info(f'{key} pressed, ending user input recording')
-            queue.put([EVENT_SESSION_END, timestamp])
-            break
-
-        queue.put([EVENT_USER_RECOVER, timestamp])
-
-    logger.info(f'User input recording ended at {time()}')
-    queue.close()
 
 
 def record_signals(duration, sources, filepath, conn):
@@ -80,7 +55,7 @@ def record_signals(duration, sources, filepath, conn):
             record_processes.append(process)
 
         # Recording process will terminate early if stream is broken. Detect and restart.
-        record_processes[0].join(CHUNK_DURATION_BUFFER)
+        record_processes[0].join(CHUNK_DURATION_MIN)
         if not record_processes[0].is_alive():
             logger.warning('Error in stream. Restarting...')
             for process in record_processes:
@@ -94,7 +69,7 @@ def record_signals(duration, sources, filepath, conn):
         dummy_timestamp = time()
         logger.debug(f'Signaling chunk start at {dummy_timestamp}')
         conn.send([EVENT_RECORD_CHUNK_START, dummy_timestamp])
-        record_processes[0].join(chunk_duration + CHUNK_DURATION_BUFFER)
+        record_processes[0].join(chunk_duration)
 
         # Give other recording processes a chance to end normally
         if source_count > 1:

@@ -16,7 +16,7 @@ from time import gmtime, strftime
 
 
 logger = logging.getLogger(PACKAGE_NAME)
-logging.info(PACKAGE_NAME)
+logging.basicConfig(level=logging.WARNING)
 
 
 def main(args):
