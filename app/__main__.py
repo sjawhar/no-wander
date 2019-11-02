@@ -47,6 +47,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-d', '--duration',
         type=int,
+        required=True,
         help='Length of the meditation session in minutes',
     )
     parser.add_argument(

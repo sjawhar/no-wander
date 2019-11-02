@@ -35,10 +35,12 @@ def get_duration(duration=None):
     return duration * 60
 
 
-def play_bell():
+def play_bell(wait=True):
     try:
         bell = sound.Sound(SOUND_BELL)
         bell.play()
+        if not wait:
+            return
         core.wait(bell.getDuration())
     except:
         logger.error('Could not play bell sound')
@@ -96,7 +98,7 @@ def run_session(duration, sources, filepath):
     )
     text.draw()
     session_window.flip()
-    play_bell()
+    play_bell(wait=False)
 
     clock = core.Clock()
     start_time = time()
