@@ -96,3 +96,10 @@ def record(args):
 
     run_session(duration, args.sources, filepath)
     end_stream()
+
+
+def process():
+    from .process import get_raw_files, process_raw_files
+
+    raw_files = get_raw_files()
+    process_raw_files(raw_files)
