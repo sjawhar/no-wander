@@ -1,6 +1,6 @@
 import argparse
 import logging
-from .cli import add_record_args, process, record
+from .cli import process_run, process_setup_parser, record_run, record_setup_parser
 from .constants import PACKAGE_NAME
 
 
@@ -22,13 +22,14 @@ add_verbosity_arg(parser)
 subparsers = parser.add_subparsers(title='commands', description='valid commands')
 
 parser_record = subparsers.add_parser('record', help='Record meditation session')
-parser_record.set_defaults(handler=record)
+parser_record.set_defaults(handler=record_run)
 add_verbosity_arg(parser_record)
-add_record_args(parser_record)
+record_setup_parser(parser_record)
 
 parser_process = subparsers.add_parser('process', help='Merge sources for recorded sessions')
-parser_process.set_defaults(handler=process)
+parser_process.set_defaults(handler=process_run)
 add_verbosity_arg(parser_process)
+process_setup_parser(parser_process)
 
 if __name__ == '__main__':
     args = parser.parse_args()

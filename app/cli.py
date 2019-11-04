@@ -13,7 +13,7 @@ from .stream import (
 logger = logging.getLogger(PACKAGE_NAME + '.' + __name__)
 
 
-def add_record_args(parser):
+def record_setup_parser(parser):
     parser.add_argument(
         '-a', '--address',
         help='Skip search and stream from specified address',
@@ -61,7 +61,7 @@ def add_record_args(parser):
     file_group = parser.add_mutually_exclusive_group()
     file_group.add_argument(
         '-f', '--filename',
-        help='Filename where recording should be saved',
+        help='Filename for recorded data',
     )
     file_group.add_argument(
         '-t', '--test',
@@ -71,7 +71,7 @@ def add_record_args(parser):
     )
 
 
-def record(args):
+def record_run(args):
     from .session import get_duration, run_session
     from .stream import end_stream, start_stream, visualize
 
@@ -86,20 +86,30 @@ def record(args):
 
     logger.debug(f'Record called with {args}')
 
-    duration = get_duration(args.duration)
-    filepath = (Path(__file__).parent / args.filename).resolve()
-
     if not start_stream(args.address, args.sources):
         exit(1)
     if not args.skip_visualize:
         visualize()
 
-    run_session(duration, args.sources, filepath)
+    run_session(get_duration(args.duration), args.sources, args.filename)
     end_stream()
 
 
-def process():
+def process_setup_parser(parser):
+    parser.add_argument(
+        '-d', '--data-dir',
+        default=DIR_INPUT,
+        help='Directory containing data files',
+    )
+
+
+def process_run(args):
     from .process import get_raw_files, process_raw_files
 
-    raw_files = get_raw_files()
+    logger.debug(f'Process called with {args}')
+
+    if type(args.data_dir) is str:
+        args.data_dir = Path(args.data_dir)
+
+    raw_files = get_raw_files(args.data_dir)
     process_raw_files(raw_files)

@@ -1,6 +1,6 @@
 import logging
 import pandas as pd
-from .constants import DIR_FAILED, DIR_INPUT, DIR_OUTPUT, DIR_PROCESSED
+from .constants import DIR_FAILED, DIR_OUTPUT, DIR_PROCESSED, PACKAGE_NAME
 
 
 PREFIX_MARKER = 'Marker'
@@ -8,9 +8,9 @@ PREFIX_MARKER = 'Marker'
 logger = logging.getLogger(PACKAGE_NAME + '.' + __name__)
 
 
-def get_raw_files():
+def get_raw_files(data_dir):
     raw_files = {}
-    for file in DIR_INPUT.glob('*.[A-Z]*.[0-9]*.csv'):
+    for file in data_dir.glob('*.[A-Z]*.[0-9]*.csv'):
         name_parts = file.name.split('.')
         recording = '.'.join(name_parts[:-3] + name_parts[-2:])
         if recording not in raw_files:

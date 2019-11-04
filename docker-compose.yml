@@ -19,6 +19,14 @@ services:
     entrypoint: [python3, -m, meditation_eeg, record]
     command: [--duration, '20']
 
+  process:
+    build: .
+    image: sjawhar/meditation-eeg
+    container_name: meditation-eeg-process
+    volumes:
+      - ./app:/home/muselsl/meditation_eeg
+    entrypoint: [python3, -m, meditation_eeg, process]
+
   notebook:
     image: jupyter/scipy-notebook
     container_name: meditation-eeg-notebook
