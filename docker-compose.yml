@@ -16,7 +16,7 @@ services:
       - ${HOME}/.config/muselsl/devices:/var/lib/bluetooth
     network_mode: host
     privileged: true
-    entrypoint: [python3, -m, meditation_eeg]
+    entrypoint: [python3, -m, meditation_eeg, record]
     command: [--duration, '20']
 
   notebook:
