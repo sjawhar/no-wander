@@ -1,6 +1,6 @@
 import argparse
 import logging
-from .constants import PACKAGE_NAME
+from .constants import DIR_INPUT, DIR_TEST, PACKAGE_NAME
 from .session import get_duration, run_session
 from .stream import (
     end_stream,
@@ -99,8 +99,8 @@ if __name__ == '__main__':
     if args.filename and args.test:
         raise ValueError('Cannot use both filename and test flags at the same time.')
     elif not args.filename:
-        data_dir = "test" if args.test else "prod"
-        args.filename = f'data/{data_dir}/{strftime("%Y-%m-%d_%H-%M-%S", gmtime())}.csv'
+        data_dir = DIR_TEST if args.test else DIR_INPUT
+        args.filename = data_dir / f'{strftime("%Y-%m-%d_%H-%M-%S", gmtime())}.csv'
 
     if not args.sources:
         args.sources = []

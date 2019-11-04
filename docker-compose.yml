@@ -18,3 +18,12 @@ services:
     privileged: true
     entrypoint: [python3, -m, meditation_eeg]
     command: [--duration, '20']
+
+  notebook:
+    image: jupyter/scipy-notebook
+    container_name: meditation-eeg-notebook
+    volumes:
+      - ./app:/home/jovyan/work
+    ports:
+      - 8888:8888
+    command: [start.sh, jupyter, lab, --LabApp.token='']
