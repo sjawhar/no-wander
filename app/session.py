@@ -16,8 +16,7 @@ from .constants import (
 
 
 KEYS_QUIT = ['esc', 'q']
-MARKER_EMPTY = 0
-MARKER_END = 2
+MARKER_SYNC = -1
 MARKER_RECOVER = 1
 SOUND_BELL = (Path(__file__).parent / 'assets' / 'bell.wav').resolve()
 
@@ -56,9 +55,10 @@ def handle_signals_message(message, outlet):
 
     if message[0] == EVENT_RECORD_CHUNK_START:
         # muselsl.record throws an exception if marker stream contains no samples
-        # Insert empty sample to ensure recording file is saved properly
-        logger.debug(f'Pushing empty sample at {message[1]}')
-        outlet.push_sample([MARKER_EMPTY], message[1])
+        # Insert sample to ensure recording file is saved properly
+        # Also helps synchronize multiple recording sources
+        logger.debug(f'Pushing sync marker at {message[1]}')
+        outlet.push_sample([MARKER_SYNC], message[1])
 
     return None
 
@@ -73,7 +73,7 @@ def handle_keypress(keys, outlet):
             continue
 
         logger.info(f'{key} pressed, ending user input recording')
-        outlet.push_sample([MARKER_END], timestamp)
+        outlet.push_sample([MARKER_SYNC], timestamp)
         quit = True
 
     return quit
