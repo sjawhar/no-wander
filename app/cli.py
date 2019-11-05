@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from time import gmtime, strftime
-from .constants import DIR_INPUT, DIR_TEST, PACKAGE_NAME
+from .constants import DIR_DATA_DEFAULT, DIR_INPUT, DIR_OUTPUT, DIR_TEST, PACKAGE_NAME
 from .stream import (
     SOURCE_ACC,
     SOURCE_EEG,
@@ -65,8 +65,10 @@ def record_setup_parser(parser):
     )
     file_group.add_argument(
         '-t', '--test',
-        action='store_true',
-        default=False,
+        dest='data_dir',
+        action='store_const',
+        const=DIR_TEST,
+        default=DIR_INPUT,
         help='Store data in test directory',
     )
 
@@ -75,16 +77,19 @@ def record_run(args):
     from .session import get_duration, run_session
     from .stream import end_stream, start_stream, visualize
 
-    if not args.filename:
-        data_dir = DIR_TEST if args.test else DIR_INPUT
-        args.filename = data_dir / f'{strftime("%Y-%m-%d_%H-%M-%S", gmtime())}.csv'
+    logger.debug(f'Command record called with {args}')
+
+    if args.filename:
+        args.filename = Path.cwd() / args.filename
+    else:
+        args.filename = DIR_DATA_DEFAULT / args.data_dir / f'{strftime("%Y-%m-%d_%H-%M-%S", gmtime())}.csv'
 
     if not args.sources:
         args.sources = []
     if args.eeg:
         args.sources.append(SOURCE_EEG)
 
-    logger.debug(f'Record called with {args}')
+    logger.debug(f'Starting command record with args {args}')
 
     if not start_stream(args.address, args.sources):
         exit(1)
@@ -98,7 +103,7 @@ def record_run(args):
 def process_setup_parser(parser):
     parser.add_argument(
         '-d', '--data-dir',
-        default=DIR_INPUT,
+        default=DIR_DATA_DEFAULT / DIR_INPUT,
         help='Directory containing data files',
     )
 
@@ -106,10 +111,12 @@ def process_setup_parser(parser):
 def process_run(args):
     from .process import get_raw_files, process_raw_files
 
-    logger.debug(f'Process called with {args}')
+    logger.debug(f'Command process called with {args}')
 
     if type(args.data_dir) is str:
-        args.data_dir = Path(args.data_dir)
+        args.data_dir = Path.cwd() / args.data_dir
+
+    logger.debug(f'Starting command process with args {args}')
 
     raw_files = get_raw_files(args.data_dir)
-    process_raw_files(raw_files)
+    process_raw_files(raw_files, args.data_dir.parent / DIR_OUTPUT)

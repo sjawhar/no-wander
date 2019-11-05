@@ -1,11 +1,11 @@
 from pathlib import Path
 
-DIR_DATA = Path('data')
-DIR_FAILED = DIR_DATA / 'failed'
-DIR_INPUT = DIR_DATA / 'input'
-DIR_OUTPUT = DIR_DATA / 'output'
-DIR_PROCESSED = DIR_DATA / 'processed'
-DIR_TEST = DIR_DATA / 'test'
+DIR_DATA_DEFAULT = Path(__file__).parent / 'data'
+DIR_FAILED = 'failed'
+DIR_INPUT = 'input'
+DIR_OUTPUT = 'output'
+DIR_PROCESSED = 'processed'
+DIR_TEST = 'test'
 
 EVENT_RECORD_CHUNK_START = 'EVENT_RECORD_CHUNK_START'
 EVENT_SESSION_END = 'EVENT_SESSION_END'

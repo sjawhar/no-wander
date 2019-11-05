@@ -70,16 +70,16 @@ def move_files(files, dest_dir):
         file.rename(dest_dir / file.name)
 
 
-def process_raw_files(raw_files):
-    if not DIR_OUTPUT.exists():
-        DIR_OUTPUT.mkdir()
+def process_raw_files(raw_files, output_dir):
+    if not output_dir.exists():
+        output_dir.mkdir()
 
     for recording, files in raw_files.items():
         try:
             data = load_data_from_files(files)
             merged_df = merge_sources(data)
-            merged_df.to_csv(DIR_OUTPUT / recording)
-            move_files(files, DIR_PROCESSED)
+            merged_df.to_csv(output_dir / recording)
+            move_files(files, output_dir.parent / DIR_PROCESSED)
         except Exception as e:
             logger.error(e)
-            move_files(files, DIR_FAILED)
+            move_files(files, output_dir.parent / DIR_FAILED)
