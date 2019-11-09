@@ -16,7 +16,7 @@ def add_verbosity_arg(parser):
         help='Enable verbose logging',
     )
 
-parser = argparse.ArgumentParser(prog='meditation_eeg')
+parser = argparse.ArgumentParser(prog='no_wander')
 add_verbosity_arg(parser)
 
 subparsers = parser.add_subparsers(title='commands', description='valid commands')
