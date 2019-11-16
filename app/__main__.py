@@ -11,10 +11,19 @@ logging.basicConfig(level=logging.WARNING)
 def add_verbosity_arg(parser):
     parser.add_argument(
         '-v', '--verbose',
-        action='store_true',
-        default=False,
+        action='count',
+        default=0,
         help='Enable verbose logging',
     )
+
+
+def get_log_level(verbosity):
+    if verbosity >= 2:
+        return logging.DEBUG
+    elif verbosity == 1:
+        return logging.INFO
+    return logging.WARNING
+
 
 parser = argparse.ArgumentParser(prog='no_wander')
 add_verbosity_arg(parser)
@@ -33,7 +42,7 @@ process_setup_parser(parser_process)
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
 
+    logger.setLevel(get_log_level(args.verbose))
     logger.debug(f'Received args {args}')
     args.handler(args)

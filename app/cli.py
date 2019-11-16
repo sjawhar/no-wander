@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from time import gmtime, strftime
-from .constants import DIR_DATA_DEFAULT, DIR_INPUT, DIR_OUTPUT, DIR_TEST, PACKAGE_NAME
+from .constants import DIR_DATA_DEFAULT, DIR_INPUT, DIR_MERGED, DIR_TEST, PACKAGE_NAME
 from .stream import (
     SOURCE_ACC,
     SOURCE_EEG,
@@ -109,7 +109,7 @@ def process_setup_parser(parser):
 
 
 def process_run(args):
-    from .process import get_raw_files, process_raw_files
+    from .process import get_files_by_session, process_session_data
 
     logger.debug(f'Command process called with {args}')
 
@@ -118,5 +118,5 @@ def process_run(args):
 
     logger.debug(f'Starting command process with args {args}')
 
-    raw_files = get_raw_files(args.data_dir)
-    process_raw_files(raw_files, args.data_dir.parent / DIR_OUTPUT)
+    raw_files = get_files_by_session(args.data_dir)
+    process_session_data(raw_files, args.data_dir.parent)

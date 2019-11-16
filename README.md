@@ -21,6 +21,12 @@ In the moment, one can be (and usually is) distracted without realizing it. Ther
 ### Step 2: Training
 Once a reliable method for detecting distraction has been established, we can use it in our closed-loop system. Once again, the subject is asked to meditate while their biosignals are recorded. Now, however, we can detect distraction before the subject is aware of it themselves. When we do, we allow the subject a "grace period" to recover on their own. When the grace period elapses, we provide a subtle queue (e.g. a bell chime) to bring the subject's focus back to the present, and so the cycle repeats. By progressively shortening these "grace periods", we train the subject to recognize and detach from their distraction more quickly. If this training transfers to other aspects of life, I believe it can seriously alleviate emotional suffering.
 
+## Requirements
+* Muse 2
+* Docker
+* Linux
+* Wireless keyboard
+
 ## Project Roadmap
 * **Phase 1 - Data Collection Pipeline**
     * **Type:** Engineering
@@ -67,9 +73,13 @@ Once a reliable method for detecting distraction has been established, we can us
 ### Why Meditation?
 TODO: No confounding signals from movement, vision, audition, etc. Nothing but cognition.
 
+### Doesn't this Already Exist?
+TODO: Comment on existing technologies (e.g. Muse)
+
 ### Possible Extensions
 TODO
 * Rely only on phone camera and computer vision (posture changes, eyelid fluttering, heart rate)
+* Detect distraction automatically by determining if subtle audio queues have been consciously perceived
 
 ### Reflections on Awareness
 To understand our use of awareness, consider the following example:

@@ -9,6 +9,7 @@ services:
       XAUTHORITY: /tmp/.docker.xauth
     volumes:
       - ./app:/home/muselsl/no_wander
+      - ./data:/home/muselsl/data
       - /tmp/.docker.xauth:/tmp/.docker.xauth
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ${HOME}/.config/muselsl/bluetooth:/etc/bluetooth
@@ -25,13 +26,15 @@ services:
     container_name: no-wander-process
     volumes:
       - ./app:/home/muselsl/no_wander
+      - ./data:/home/muselsl/data
     entrypoint: [python3, -m, no_wander, process]
 
   notebook:
     image: jupyter/scipy-notebook
     container_name: no-wander-notebook
     volumes:
-      - ./app:/home/jovyan/work
+      - ./app:/home/jovyan/work/no_wander
+      - ./data:/home/jovyan/work/data
     ports:
       - 8888:8888
     command: [start.sh, jupyter, lab, --LabApp.token='']

@@ -198,4 +198,4 @@ $RECYCLE.BIN/
 
 .config
 .psychopy3
-app/data
+data/**/*.csv

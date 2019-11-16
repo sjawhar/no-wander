@@ -11,13 +11,13 @@ from .constants import (
     EVENT_SESSION_END,
     EVENT_STREAMING_ERROR,
     EVENT_STREAMING_RESTARTED,
+    MARKER_RECOVER,
+    MARKER_SYNC,
     PACKAGE_NAME,
 )
 
 
 KEYS_QUIT = ['esc', 'q']
-MARKER_SYNC = -1
-MARKER_RECOVER = 1
 SOUND_BELL = (Path(__file__).parent / 'assets' / 'bell.wav').resolve()
 
 logger = logging.getLogger(PACKAGE_NAME + '.' + __name__)
@@ -49,6 +49,7 @@ def handle_signals_message(message, outlet):
     """Return message to pass back to signal process, else None"""
     logger.debug(f'Received {message} from signal recording')
     if message[0] == EVENT_STREAMING_ERROR:
+        # TODO: Handle case where stream never starts
         start_stream(None, None, confirm=False, restart=True)
         logger.info('Stream restarted')
         return [EVENT_STREAMING_RESTARTED]
