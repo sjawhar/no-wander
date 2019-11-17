@@ -8,7 +8,7 @@ The idea came to me while on a meditation retreat: could emotional suffering (e.
 
 Many interventions exist for emotional disorder, and indeed mindfulness training is gaining in popularity among them. I beleve the key might lie in a closed-loop system for attention training. The team at Neuroscape recently published a paper their closed-loop medtitation app MediTrain,[[1](https://www.nature.com/articles/s41562-019-0611-9)] with promising results. The feedback which "closes the loop" in their paradigm is self-assesed user feedback. As long-term meditation practitioners can attest, however, a novice meditator is reliably misinformed about the nature of their own mind. If you ask a first-time meditator to hold attention on his breath for 10 seconds, he will try it and tell you that, yes, he can.
 
-**He is usually wrong.**
+He is usually wrong.
 
 The flaw of this approach is in the very definition of the problem we're trying to solve: the untrained mind is simply not aware that it is distracted. It mistakes _thinking about meditation_ for meditation itself. It is therefore not a good source of feedback in a closed-loop system. This project aims to overcome this shortcoming with clever experimental design and machine learning, as is explained below. By learning to reliably detect distraction, we can provide a better signal to the closed-loop system and ultimately a better intervention.
 
@@ -67,6 +67,11 @@ Once a reliable method for detecting distraction has been established, we can us
     * **Deliverable:** ML model tuned for generalizability and robustness
     * **Status:** Unstarted
     * **ETA:** Q2 2020
+* **Phase 8 - Trials**
+    * **Type:** Clinical Trials
+    * **Deliverable:** Studies validating intervention with outcome measures
+    * **Status:** Unstarted
+    * **ETA:** TBD
 
 
 ## Other Notes

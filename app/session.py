@@ -122,6 +122,7 @@ def run_session(duration, sources, filepath):
             keys = event.getKeys(timeStamped=clock)
             if keys is not None and handle_keypress(keys, outlet) is True:
                 logger.info('Triggering end of session')
+                # TODO: Close session window on early end
                 signals_conn.send([EVENT_SESSION_END])
                 signals_process.join()
                 logger.info('Session ended')
