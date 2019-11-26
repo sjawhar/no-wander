@@ -16,21 +16,21 @@ from .constants import (
 from .stream import SOURCE_EEG
 
 
-CHANNEL_TYPE_EEG = 'eeg'
-CHANNEL_TYPE_STIM = 'stim'
-EVENT_RECOVERY = 'Recovery'
+CHANNEL_TYPE_EEG = "eeg"
+CHANNEL_TYPE_STIM = "stim"
+EVENT_RECOVERY = "Recovery"
 EPOCHS_EVENT_ID = {EVENT_RECOVERY: MARKER_RECOVER}
-MONTAGE_STANDARD_1005 = make_standard_montage('standard_1005')
-PREFIX_MARKER = 'Marker'
+MONTAGE_STANDARD_1005 = make_standard_montage("standard_1005")
+PREFIX_MARKER = "Marker"
 
-logger = logging.getLogger(PACKAGE_NAME + '.' + __name__)
+logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
 
 
 def get_files_by_session(data_dir):
     raw_files = {}
-    for file in data_dir.glob('*.[A-Z]*.[0-9]*.csv'):
-        name_parts = file.name.split('.')
-        session = PurePath('.'.join(name_parts[:-3] + name_parts[-2:]))
+    for file in data_dir.glob("*.[A-Z]*.[0-9]*.csv"):
+        name_parts = file.name.split(".")
+        session = PurePath(".".join(name_parts[:-3] + name_parts[-2:]))
         if session not in raw_files:
             raw_files[session] = []
         raw_files[session].append(file)
@@ -42,7 +42,11 @@ def get_files_by_session(data_dir):
 
 
 def get_renamer(s, i):
-    return lambda x: f'{s}_{x.replace(" ", "_")}' if x != "Marker0" else f'{PREFIX_MARKER}{i}'
+    return (
+        lambda x: f'{s}_{x.replace(" ", "_")}'
+        if x != "Marker0"
+        else f"{PREFIX_MARKER}{i}"
+    )
 
 
 def load_session_data(files):
@@ -51,7 +55,7 @@ def load_session_data(files):
     eeg_data = None
     for i in range(num_files):
         file = files[i]
-        source = file.name.split('.')[-3]
+        source = file.name.split(".")[-3]
         df = pd.read_csv(file, index_col=0)
         df.rename(columns=get_renamer(source, i), inplace=True)
         data[i] = df
@@ -64,13 +68,15 @@ def merge_sources(data, reindex=None):
     if len(data) == 1:
         return data[0]
 
-    merged = pd.concat(data, axis=1, join='outer')
-    merged = merged.apply(pd.Series.interpolate, args=('index',))
+    merged = pd.concat(data, axis=1, join="outer")
+    merged = merged.apply(pd.Series.interpolate, args=("index",))
     if type(reindex) is pd.DataFrame:
         merged = merged.reindex(index=reindex.index)
-    merged.dropna(axis=0, how='any', inplace=True)
+    merged.dropna(axis=0, how="any", inplace=True)
 
-    marker_cols = [col for col in merged.columns.values if col.startswith(PREFIX_MARKER)]
+    marker_cols = [
+        col for col in merged.columns.values if col.startswith(PREFIX_MARKER)
+    ]
     marker_cols.sort()
     last = 0
     markers = []
@@ -82,7 +88,7 @@ def merge_sources(data, reindex=None):
 
     merged.drop(columns=marker_cols, inplace=True)
 
-    marker_col = f'{PREFIX_MARKER}0'
+    marker_col = f"{PREFIX_MARKER}0"
     merged[marker_col] = 0
     merged.loc[markers, marker_col] = 1
     return merged
@@ -96,9 +102,9 @@ def get_mne_raw(data, exclude_right_aux=True):
         if PREFIX_MARKER in col:
             stim_col = col
             continue
-        elif not col.startswith('EEG_'):
+        elif not col.startswith("EEG_"):
             continue
-        elif 'AUX' in col and exclude_right_aux:
+        elif "AUX" in col and exclude_right_aux:
             continue
         eeg_cols.append(col)
 
@@ -108,7 +114,7 @@ def get_mne_raw(data, exclude_right_aux=True):
     eeg_data = data.reindex(columns=eeg_cols + [stim_col]).values.T
     eeg_data[:-1] *= 1e-6
 
-    ch_names = [col.replace('EEG_', '') for col in eeg_cols] + [PREFIX_MARKER]
+    ch_names = [col.replace("EEG_", "") for col in eeg_cols] + [PREFIX_MARKER]
     ch_types = [CHANNEL_TYPE_EEG] * len(eeg_cols) + [CHANNEL_TYPE_STIM]
     mne_info = create_info(
         ch_names=ch_names,
@@ -128,7 +134,7 @@ def get_epochs(data):
     if raw is None:
         return session_epochs
 
-    raw.filter(1, 30, method='iir')
+    raw.filter(1, 30, method="iir")
     events = find_events(raw)
     epochs = Epochs(
         raw,
@@ -137,15 +143,15 @@ def get_epochs(data):
         tmin=-2,
         tmax=2,
         baseline=None,
-        reject={'eeg': 100e-6},
+        reject={"eeg": 100e-6},
         preload=True,
         verbose=False,
         picks=[CHANNEL_TYPE_EEG],
     )
 
     num_events = len(epochs.events)
-    dropped = (1 - num_events/len(events)) * 100
-    logger.info(f'{dropped:.2f}% of samples dropped')
+    dropped = (1 - num_events / len(events)) * 100
+    logger.info(f"{dropped:.2f}% of samples dropped")
 
     if num_events == 0:
         return session_epochs
@@ -178,10 +184,11 @@ def process_session_data(raw_files, output_dir):
             merged_df = merge_sources(data, reindex=eeg_data)
             epochs = get_epochs(merged_df)
             for epoch in range(len(epochs)):
-                epochs[epoch].to_csv(output_dir / DIR_EPOCHS / f'{session.stem}.{epoch}.{session.suffix}')
+                epochs[epoch].to_csv(
+                    output_dir / DIR_EPOCHS / f"{session.stem}.{epoch}.{session.suffix}"
+                )
             merged_df.to_csv(output_dir / DIR_MERGED / session)
             move_files(files, output_dir / DIR_PROCESSED)
         except Exception as e:
             logger.exception(e)
             move_files(files, output_dir / DIR_FAILED)
-

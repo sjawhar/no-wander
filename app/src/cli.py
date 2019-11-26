@@ -10,66 +10,70 @@ from .stream import (
 )
 
 
-logger = logging.getLogger(PACKAGE_NAME + '.' + __name__)
+logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
 
 
 def record_setup_parser(parser):
     parser.add_argument(
-        '-a', '--address',
-        help='Skip search and stream from specified address',
+        "-a", "--address", help="Skip search and stream from specified address",
     )
     parser.add_argument(
-        '-c', '--acc',
-        dest='sources',
-        action='append_const',
+        "-c",
+        "--acc",
+        dest="sources",
+        action="append_const",
         const=SOURCE_ACC,
-        help='Record accelerometer measurements',
+        help="Record accelerometer measurements",
     )
     parser.add_argument(
-        '-d', '--duration',
+        "-d",
+        "--duration",
         type=int,
         required=True,
-        help='Length of the meditation session in minutes',
+        help="Length of the meditation session in minutes",
     )
     parser.add_argument(
-        '--no-eeg',
-        dest='eeg',
-        action='store_false',
+        "--no-eeg",
+        dest="eeg",
+        action="store_false",
         default=True,
-        help='Record gyroscope measurements',
+        help="Record gyroscope measurements",
     )
     parser.add_argument(
-        '-g', '--gyro',
-        dest='sources',
-        action='append_const',
+        "-g",
+        "--gyro",
+        dest="sources",
+        action="append_const",
         const=SOURCE_GYRO,
-        help='Record gyroscope measurements',
+        help="Record gyroscope measurements",
     )
     parser.add_argument(
-        '-p', '--ppg',
-        dest='sources',
-        action='append_const',
+        "-p",
+        "--ppg",
+        dest="sources",
+        action="append_const",
         const=SOURCE_PPG,
-        help='Record PPG measurements',
+        help="Record PPG measurements",
     )
     parser.add_argument(
-        '-s', '--skip-visualize',
-        action='store_true',
+        "-s",
+        "--skip-visualize",
+        action="store_true",
         default=False,
-        help='Skip visualization and stability check',
+        help="Skip visualization and stability check",
     )
     file_group = parser.add_mutually_exclusive_group()
     file_group.add_argument(
-        '-f', '--filename',
-        help='Filename for recorded data',
+        "-f", "--filename", help="Filename for recorded data",
     )
     file_group.add_argument(
-        '-t', '--test',
-        dest='data_dir',
-        action='store_const',
+        "-t",
+        "--test",
+        dest="data_dir",
+        action="store_const",
         const=DIR_TEST,
         default=DIR_INPUT,
-        help='Store data in test directory',
+        help="Store data in test directory",
     )
 
 
@@ -77,19 +81,23 @@ def record_run(args):
     from .session import get_duration, run_session
     from .stream import end_stream, start_stream, visualize
 
-    logger.debug(f'Command record called with {args}')
+    logger.debug(f"Command record called with {args}")
 
     if args.filename:
         args.filename = Path.cwd() / args.filename
     else:
-        args.filename = DIR_DATA_DEFAULT / args.data_dir / f'{strftime("%Y-%m-%d_%H-%M-%S", gmtime())}.csv'
+        args.filename = (
+            DIR_DATA_DEFAULT
+            / args.data_dir
+            / f'{strftime("%Y-%m-%d_%H-%M-%S", gmtime())}.csv'
+        )
 
     if not args.sources:
         args.sources = []
     if args.eeg:
         args.sources.append(SOURCE_EEG)
 
-    logger.debug(f'Starting command record with args {args}')
+    logger.debug(f"Starting command record with args {args}")
 
     if not start_stream(args.address, args.sources):
         exit(1)
@@ -102,21 +110,22 @@ def record_run(args):
 
 def process_setup_parser(parser):
     parser.add_argument(
-        '-d', '--data-dir',
+        "-d",
+        "--data-dir",
         default=DIR_DATA_DEFAULT / DIR_INPUT,
-        help='Directory containing data files',
+        help="Directory containing data files",
     )
 
 
 def process_run(args):
     from .process import get_files_by_session, process_session_data
 
-    logger.debug(f'Command process called with {args}')
+    logger.debug(f"Command process called with {args}")
 
     if type(args.data_dir) is str:
         args.data_dir = Path.cwd() / args.data_dir
 
-    logger.debug(f'Starting command process with args {args}')
+    logger.debug(f"Starting command process with args {args}")
 
     raw_files = get_files_by_session(args.data_dir)
     process_session_data(raw_files, args.data_dir.parent)

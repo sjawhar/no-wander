@@ -1,0 +1,27 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[packages]
+mne = "~=0.19.2"
+muselsl = "~=2.0.2"
+pandas = "~=0.25.3"
+psychopy = "~=3.2.3"
+pygame = "~=1.9.6"
+pylsl = ">=1.10.5"
+vispy = "~=0.6.2"
+
+[dev-packages]
+black = "==19.10b0"
+pytest = "~=5.3.0"
+pytest-watch = "~=4.2.0"
+
+[requires]
+python_version = "3.7"
+
+[scripts]
+test = "pytest -v"
+test-dev = "pytest-watch -- -vv"
+format = "black --verbose --target-version py37 ."
+lint = "pipenv run format --check"

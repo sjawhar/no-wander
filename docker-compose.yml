@@ -1,5 +1,7 @@
 version: '3'
+
 services:
+
   record:
     build: .
     image: sjawhar/no-wander
@@ -8,7 +10,7 @@ services:
       DISPLAY:
       XAUTHORITY: /tmp/.docker.xauth
     volumes:
-      - ./app:/home/muselsl/no_wander
+      - ./app/src:/home/muselsl/no_wander
       - ./data:/home/muselsl/data
       - /tmp/.docker.xauth:/tmp/.docker.xauth
       - /tmp/.X11-unix:/tmp/.X11-unix
@@ -25,7 +27,7 @@ services:
     image: sjawhar/no-wander
     container_name: no-wander-process
     volumes:
-      - ./app:/home/muselsl/no_wander
+      - ./app/src:/home/muselsl/no_wander
       - ./data:/home/muselsl/data
     entrypoint: [python3, -m, no_wander, process]
 
@@ -33,7 +35,7 @@ services:
     image: jupyter/scipy-notebook
     container_name: no-wander-notebook
     volumes:
-      - ./app:/home/jovyan/work/no_wander
+      - ./app/src:/home/jovyan/work/no_wander
       - ./data:/home/jovyan/work/data
     ports:
       - 8888:8888

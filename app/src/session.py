@@ -17,19 +17,19 @@ from .constants import (
 )
 
 
-KEYS_QUIT = ['esc', 'q']
-SOUND_BELL = (Path(__file__).parent / 'assets' / 'bell.wav').resolve()
+KEYS_QUIT = ["esc", "q"]
+SOUND_BELL = (Path(__file__).parent / "assets" / "bell.wav").resolve()
 
-logger = logging.getLogger(PACKAGE_NAME + '.' + __name__)
+logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
 
 
 def get_duration(duration=None):
     while type(duration) is not int:
         try:
-            duration = input('For how many minutes should the session run? ')
+            duration = input("For how many minutes should the session run? ")
             duration = int(duration)
         except:
-            logger.error(f'Invalid input {duration}')
+            logger.error(f"Invalid input {duration}")
 
     return duration * 60
 
@@ -42,23 +42,23 @@ def play_bell(wait=True):
             return
         core.wait(bell.getDuration())
     except:
-        logger.error('Could not play bell sound')
+        logger.error("Could not play bell sound")
 
 
 def handle_signals_message(message, outlet):
     """Return message to pass back to signal process, else None"""
-    logger.debug(f'Received {message} from signal recording')
+    logger.debug(f"Received {message} from signal recording")
     if message[0] == EVENT_STREAMING_ERROR:
         # TODO: Handle case where stream never starts
         start_stream(None, None, confirm=False, restart=True)
-        logger.info('Stream restarted')
+        logger.info("Stream restarted")
         return [EVENT_STREAMING_RESTARTED]
 
     if message[0] == EVENT_RECORD_CHUNK_START:
         # muselsl.record throws an exception if marker stream contains no samples
         # Insert sample to ensure recording file is saved properly
         # Also helps synchronize multiple recording sources
-        logger.debug(f'Pushing sync marker at {message[1]}')
+        logger.debug(f"Pushing sync marker at {message[1]}")
         outlet.push_sample([MARKER_SYNC], message[1])
 
     return None
@@ -68,12 +68,12 @@ def handle_keypress(keys, outlet):
     """Return True to indicate recording should be ended, otherwise False"""
     quit = False
     for key, timestamp in keys:
-        logger.debug(f'{key} pressed at time {timestamp}')
+        logger.debug(f"{key} pressed at time {timestamp}")
         if key not in KEYS_QUIT:
             outlet.push_sample([MARKER_RECOVER], timestamp)
             continue
 
-        logger.info(f'{key} pressed, ending user input recording')
+        logger.info(f"{key} pressed, ending user input recording")
         outlet.push_sample([MARKER_SYNC], timestamp)
         quit = True
 
@@ -82,20 +82,18 @@ def handle_keypress(keys, outlet):
 
 def run_session(duration, sources, filepath):
     info = StreamInfo(
-        name='Markers',
-        type='Markers',
+        name="Markers",
+        type="Markers",
         channel_count=1,
         nominal_srate=IRREGULAR_RATE,
-        channel_format='int32',
+        channel_format="int32",
         source_id=filepath.name,
     )
     outlet = StreamOutlet(info)
 
     session_window = visual.Window(fullscr=True, color=-1)
     text = visual.TextStim(
-        session_window,
-        "If you can read this, you're not meditating!",
-        color=[1,1,1],
+        session_window, "If you can read this, you're not meditating!", color=[1, 1, 1],
     )
     text.draw()
     session_window.flip()
@@ -104,12 +102,11 @@ def run_session(duration, sources, filepath):
     clock = core.Clock()
     start_time = time()
     clock.reset(-start_time)
-    logger.debug(f'Starting recording at {start_time}')
+    logger.debug(f"Starting recording at {start_time}")
 
     signals_conn, conn = Pipe()
     signals_process = Process(
-        target=record_signals,
-        args=(duration, sources, filepath, conn),
+        target=record_signals, args=(duration, sources, filepath, conn),
     )
     signals_process.start()
 
@@ -121,11 +118,11 @@ def run_session(duration, sources, filepath):
                     signals_conn.send(message)
             keys = event.getKeys(timeStamped=clock)
             if keys is not None and handle_keypress(keys, outlet) is True:
-                logger.info('Triggering end of session')
+                logger.info("Triggering end of session")
                 # TODO: Close session window on early end
                 signals_conn.send([EVENT_SESSION_END])
                 signals_process.join()
-                logger.info('Session ended')
+                logger.info("Session ended")
                 break
         except KeyboardInterrupt:
             break
