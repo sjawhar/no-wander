@@ -199,3 +199,4 @@ $RECYCLE.BIN/
 .config
 .psychopy3
 data/**/*.csv
+*.code-workspace

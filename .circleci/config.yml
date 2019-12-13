@@ -1,0 +1,12 @@
+version: 2.1
+
+orbs:
+  github-wiki: sjawhar/github-wiki@0.3.0
+
+workflows:
+  deploy-wiki:
+    jobs:
+      - github-wiki/build-and-deploy:
+          commit-user-email: circleci+no-wander@thecybermonk.com
+          ssh-key-fingerprint: f3:3a:40:6c:f7:38:13:d0:14:9a:39:8b:d2:b8:3a:1e
+          deploy-branch-filter: master
