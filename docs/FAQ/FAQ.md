@@ -2,12 +2,13 @@
 TODO: No confounding signals from movement, vision, audition, etc. Nothing but cognition.
 
 ### Doesn't this Already Exist?
-TODO: Comment on existing technologies (e.g. Muse)
+TODO: Comment on lack of correlation between mental state and feedback received in existing technologies (e.g. Muse)
 
 ### Possible Extensions
 TODO
 * Rely only on phone camera and computer vision (posture changes, eyelid fluttering, heart rate)
 * Detect distraction automatically by determining if subtle audio queues have been consciously perceived
+* Use CHMMs to map latest states of meditation, explore similarity between subjects
 
 ### Reflections on Awareness
 To understand our use of awareness, consider the following example:
