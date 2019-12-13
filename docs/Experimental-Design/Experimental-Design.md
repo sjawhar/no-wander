@@ -3,7 +3,7 @@ In the moment, one can be (and usually is) distracted without realizing it. Ther
 
 Simplistically, one can think of this as a simple state machine or an HMM with two latent states: focus and distraction. At any time _t_, the meditator can stay in their current state or transition to the other. When transitioning from distraction to focus, the meditator realizes their previous distracted state and signals a recovery.
 
-![State Machine](resources/state-machine.jpg)
+[[resources/state-machine.jpg]]
 
 If the meditator's biosignals are being recorded along with the times of these recoveries, then for each recovery we have two labeled time periods: the moments preceding a recovery are "distraction", and those following (up to a point) are "focus". 
 
@@ -11,7 +11,7 @@ The meditator signals a recovery by pressing a button. To minimizes noise in the
 
 By repeating this process many times and with many subjects, we collect a dataset from which we can learn to detect distraction.
 
-![Recovery Timeline](resources/recovery-timeline.jpg)
+[[resources/recovery-timeline.jpg]]
 
 We refer to the time surrounding a recovery as an "epoch". Each epoch can be broken down into many labeled "samples", which are the input to our machine-learning model. At a recording frequency of 256Hz for EEG, a sample of 0.5 seconds contains 128 datapoints for each of the n channels in the EEG stream.
 
