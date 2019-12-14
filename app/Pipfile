@@ -23,5 +23,5 @@ python_version = "3.7"
 [scripts]
 test = "pytest -v"
 test-dev = "pytest-watch -- -vv"
-format = "black --verbose --target-version py37 ."
+format = "black --verbose --target-version py37 --exclude /(\\.pytest_cache|\\.ipynb_checkpoints)/ ."
 lint = "pipenv run format --check"

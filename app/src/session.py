@@ -18,6 +18,7 @@ from .constants import (
 
 
 KEYS_QUIT = ["esc", "q"]
+KEYS_RECOVERY = ["up", "down", "left", "right", "space"]
 SOUND_BELL = (Path(__file__).parent / "assets" / "bell.wav").resolve()
 
 logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
@@ -69,8 +70,10 @@ def handle_keypress(keys, outlet):
     quit = False
     for key, timestamp in keys:
         logger.debug(f"{key} pressed at time {timestamp}")
-        if key not in KEYS_QUIT:
+        if key in KEYS_RECOVERY:
             outlet.push_sample([MARKER_RECOVER], timestamp)
+            continue
+        elif key not in KEYS_QUIT:
             continue
 
         logger.info(f"{key} pressed, ending user input recording")

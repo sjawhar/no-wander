@@ -37,7 +37,7 @@ def record_setup_parser(parser):
         dest="eeg",
         action="store_false",
         default=True,
-        help="Record gyroscope measurements",
+        help="Don't record EEG measurements",
     )
     parser.add_argument(
         "-g",
