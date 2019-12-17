@@ -6,7 +6,7 @@ The idea came to me while on a meditation retreat: could emotional suffering (e.
 
 "Attention" is, of course, an infamously vague term. This project uses it to mean "metacognition", or the awareness of the object of awareness. I believe that much emotional suffering stems from identification with thought and the inability to detect when one's mental landscape is becoming dominated by negative emotions (or possibly even the ignorance that such an ability exists). Modern times have seen the term "mindfulness" enter the zeitgeist, and our use of attention encapsulates this concept as well. However, mindfulness has become such an overloaded term that relying on it alone does little to relieve the problem. Moreover, we hope to avoid any unnecessary counter-culture pushback arising from the current "trendiness" of the mindfulness movement.
 
-Many interventions exist for emotional disorder, and indeed mindfulness training is gaining in popularity among them. I beleve the key might lie in a closed-loop system for attention training. The team at Neuroscape recently published a paper their closed-loop medtitation app MediTrain,[[1](https://www.nature.com/articles/s41562-019-0611-9)] with promising results. The feedback which "closes the loop" in their paradigm is self-assesed user feedback. As long-term meditation practitioners can attest, however, a novice meditator is reliably misinformed about the nature of their own mind. If you ask a first-time meditator to hold attention on his breath for 10 seconds, he will try it and tell you that, yes, he can.
+Many interventions exist for emotional disorder, and indeed mindfulness training is gaining in popularity among them. I beleve the key might lie in a closed-loop system for attention training. The team at Neuroscape recently published a paper their closed-loop medtitation app MediTrain,<sup>[[1](https://www.nature.com/articles/s41562-019-0611-9)]</sup> with promising results. The feedback which "closes the loop" in their paradigm is self-assesed user feedback. As long-term meditation practitioners can attest, however, a novice meditator is reliably misinformed about the nature of their own mind. If you ask a first-time meditator to hold attention on his breath for 10 seconds, he will try it and tell you that, yes, he can.
 
 He is usually wrong.
 
@@ -59,3 +59,6 @@ I also refer to distraction as "mind-wandering", leading to the name of this pro
     * **Deliverable:** Studies validating intervention with outcome measures
     * **Status:** Unstarted
     * **ETA:** TBD
+
+## References
+1. [Ziegler, D. A., Simon, A. J., Gallen, C. L., Skinner, S., Janowich, J. R., Volponi, J. J., … Gazzaley, A. (2019). Closed-loop digital meditation improves sustained attention in young adults. *Nature Human Behaviour*, 3(7), 746–757. doi: 10.1038/s41562-019-0611-9](https://www.nature.com/articles/s41562-019-0611-9)
