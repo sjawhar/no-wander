@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from time import gmtime, strftime
-from .constants import DIR_DATA_DEFAULT, DIR_INPUT, DIR_MERGED, DIR_TEST, PACKAGE_NAME
+from .constants import DIR_DATA_DEFAULT, DIR_INPUT, DIR_TEST, PACKAGE_NAME
 from .stream import (
     SOURCE_ACC,
     SOURCE_EEG,
@@ -115,6 +115,13 @@ def process_setup_parser(parser):
         default=DIR_DATA_DEFAULT / DIR_INPUT,
         help="Directory containing data files",
     )
+    parser.add_argument(
+        "-l",
+        "--limit",
+        type=int,
+        default=None,
+        help="Limit the number of processed files",
+    )
 
 
 def process_run(args):
@@ -128,4 +135,4 @@ def process_run(args):
     logger.debug(f"Starting command process with args {args}")
 
     raw_files = get_files_by_session(args.data_dir)
-    process_session_data(raw_files, args.data_dir.parent)
+    process_session_data(raw_files, args.data_dir.parent, args.limit)

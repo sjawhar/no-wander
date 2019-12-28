@@ -1,26 +1,20 @@
 import logging
 import pandas as pd
-from mne import create_info, Epochs, find_events, set_log_level as mne_log_level
-from mne.channels import make_standard_montage
-from mne.io import RawArray
 from muselsl.constants import MUSE_SAMPLING_EEG_RATE
 from pathlib import PurePath
 from .constants import (
     DIR_EPOCHS,
     DIR_FAILED,
-    DIR_MERGED,
     DIR_PROCESSED,
     MARKER_RECOVER,
     PACKAGE_NAME,
+    SOURCE_EEG,
 )
-from .stream import SOURCE_EEG
 
 
-CHANNEL_TYPE_EEG = "eeg"
-CHANNEL_TYPE_STIM = "stim"
+EPOCH_SIZE_SECONDS = 10
+EPOCH_SIZE_SAMPLES = MUSE_SAMPLING_EEG_RATE * EPOCH_SIZE_SECONDS
 EVENT_RECOVERY = "Recovery"
-EPOCHS_EVENT_ID = {EVENT_RECOVERY: MARKER_RECOVER}
-MONTAGE_STANDARD_1005 = make_standard_montage("standard_1005")
 PREFIX_MARKER = "Marker"
 
 logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
@@ -94,71 +88,17 @@ def merge_sources(data, reindex=None):
     return merged
 
 
-def get_mne_raw(data, exclude_right_aux=True):
-    eeg_cols = []
-    stim_col = None
-    for i in range(len(data.columns)):
-        col = data.columns[i]
-        if PREFIX_MARKER in col:
-            stim_col = col
-            continue
-        elif not col.startswith("EEG_"):
-            continue
-        elif "AUX" in col and exclude_right_aux:
-            continue
-        eeg_cols.append(col)
-
-    if len(eeg_cols) == 0:
-        return None
-
-    eeg_data = data.reindex(columns=eeg_cols + [stim_col]).values.T
-    eeg_data[:-1] *= 1e-6
-
-    ch_names = [col.replace("EEG_", "") for col in eeg_cols] + [PREFIX_MARKER]
-    ch_types = [CHANNEL_TYPE_EEG] * len(eeg_cols) + [CHANNEL_TYPE_STIM]
-    mne_info = create_info(
-        ch_names=ch_names,
-        ch_types=ch_types,
-        sfreq=MUSE_SAMPLING_EEG_RATE,
-        montage=MONTAGE_STANDARD_1005,
-    )
-    return RawArray(data=eeg_data, info=mne_info)
-
-
-def get_epochs(data):
+def get_epochs(merged_df):
     session_epochs = []
-    if not (data.iloc[:, -1] == 1).any():
+    data = merged_df.reset_index(drop=True)
+    recoveries = data.iloc[:, -1] == 1
+    if not recoveries.any():
         return session_epochs
 
-    raw = get_mne_raw(data)
-    if raw is None:
-        return session_epochs
-
-    raw.filter(1, 30, method="iir")
-    events = find_events(raw)
-    epochs = Epochs(
-        raw,
-        events=events,
-        event_id=EPOCHS_EVENT_ID,
-        tmin=-2,
-        tmax=2,
-        baseline=None,
-        reject={"eeg": 100e-6},
-        preload=True,
-        verbose=False,
-        picks=[CHANNEL_TYPE_EEG],
-    )
-
-    num_events = len(epochs.events)
-    dropped = (1 - num_events / len(events)) * 100
-    logger.info(f"{dropped:.2f}% of samples dropped")
-
-    if num_events == 0:
-        return session_epochs
-
-    epoch_data = epochs.to_data_frame().loc[EVENT_RECOVERY]
-    for epoch in epoch_data.index.levels[0]:
-        session_epochs.append(epoch_data.loc[epoch])
+    for recovery_ix in data.index[recoveries]:
+        min_ix = max(0, recovery_ix - EPOCH_SIZE_SAMPLES)
+        max_ix = recovery_ix + EPOCH_SIZE_SAMPLES + 1
+        session_epochs.append(data.iloc[min_ix:max_ix])
 
     return session_epochs
 
@@ -170,14 +110,12 @@ def move_files(files, dest_dir):
         file.rename(dest_dir / file.name)
 
 
-def process_session_data(raw_files, output_dir):
-    mne_log_level(logger.getEffectiveLevel())
+def process_session_data(raw_files, output_dir, limit=None):
+    epochs_dir = output_dir / DIR_EPOCHS
+    if not epochs_dir.exists():
+        epochs_dir.mkdir()
 
-    for dest_dir in [DIR_EPOCHS, DIR_MERGED]:
-        dest_dir = output_dir / dest_dir
-        if not dest_dir.exists():
-            dest_dir.mkdir()
-
+    processed_sessions = 0
     for session, files in raw_files.items():
         try:
             data, eeg_data = load_session_data(files)
@@ -185,10 +123,13 @@ def process_session_data(raw_files, output_dir):
             epochs = get_epochs(merged_df)
             for epoch in range(len(epochs)):
                 epochs[epoch].to_csv(
-                    output_dir / DIR_EPOCHS / f"{session.stem}.{epoch}.{session.suffix}"
+                    epochs_dir / f"{session.stem}.{epoch}{session.suffix}"
                 )
-            merged_df.to_csv(output_dir / DIR_MERGED / session)
             move_files(files, output_dir / DIR_PROCESSED)
         except Exception as e:
             logger.exception(e)
             move_files(files, output_dir / DIR_FAILED)
+
+        processed_sessions += 1
+        if limit is not None and processed_sessions > limit:
+            break

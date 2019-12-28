@@ -5,16 +5,17 @@ from muselsl.constants import LSL_SCAN_TIMEOUT, LSL_EEG_CHUNK
 from muselsl.viewer_v2 import Canvas as MuseCanvas
 from pylsl import resolve_byprop, StreamInlet
 from vispy import app
-from .constants import PACKAGE_NAME
-
+from .constants import (
+    PACKAGE_NAME,
+    SOURCE_ACC,
+    SOURCE_EEG,
+    SOURCE_GYRO,
+    SOURCE_PPG,
+)
 
 ATTEMPTS_MAX = 5
 SIGNAL_QUALITY_THRESHOLD = 10
 SIGNAL_STABILITY_COUNT = 100
-SOURCE_ACC = "ACC"
-SOURCE_EEG = "EEG"
-SOURCE_GYRO = "GYRO"
-SOURCE_PPG = "PPG"
 
 logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
 stream_data = {

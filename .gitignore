@@ -200,3 +200,4 @@ $RECYCLE.BIN/
 .psychopy3
 data/**/*.csv
 *.code-workspace
+notebooks/tmp*.ipynb

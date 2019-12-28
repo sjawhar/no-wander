@@ -37,6 +37,7 @@ services:
     volumes:
       - ./app/src:/home/jovyan/work/no_wander
       - ./data:/home/jovyan/work/data
+      - ./notebooks:/home/jovyan/work/notebooks
     ports:
       - 8888:8888
     command: [start.sh, jupyter, lab, --LabApp.token='']

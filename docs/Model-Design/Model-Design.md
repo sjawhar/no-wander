@@ -1,8 +1,8 @@
 ## Definitions
 
-We refer to the time surrounding a recovery as an "epoch". Each epoch can be broken down into many labeled "samples", which contain a sequence of measurements from each data source. The label of each epoch is either "distraction" (pre-recovery) or "focus" (post-recovery). The "window" of a label refers to the amount of time before or after recovery for which samples are collected.
+We refer to the time surrounding a recovery as an "epoch". Each epoch is split into three "windows", which refer to the segments of time before and after a recovery and the label applied to samples that fall within that time. These windows are the distraction, uncertainty, and focus windows. Each window can be further broken down into many labeled "samples", which contain a sequence of measurements from each data source. The label of each sample is determined by the window within which it falls.
 
-Data in an "uncertainty window" immediately preceding the recovery is discarded. From personal experience, this time period cannot be neatly categorized as either distraction or focus. Sometimes the distraction is noticed, but attention has not yet been returned to the object of focus. Sometimes attention returns in a piecemeal fashion. We believe we will have better results by not training on this time period.
+Samples in the uncertainty window immediately preceding the recovery are discarded. From personal experience, this time period cannot be neatly categorized as either distraction or focus. Sometimes the distraction is noticed, but attention has not yet been returned to the object of focus. Sometimes attention returns in a piecemeal fashion. We believe we will have better results by not training on this time period.
 
 [[resources/recovery-timeline.jpg]]
 
