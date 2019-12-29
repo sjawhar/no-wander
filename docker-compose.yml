@@ -32,7 +32,7 @@ services:
     entrypoint: [python3, -m, no_wander, process]
 
   notebook:
-    image: jupyter/scipy-notebook
+    image: jupyter/tensorflow-notebook
     container_name: no-wander-notebook
     volumes:
       - ./app/src:/home/jovyan/work/no_wander
