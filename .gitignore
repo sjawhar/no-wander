@@ -1,6 +1,6 @@
 
-# Created by https://www.gitignore.io/api/linux,python,windows,sublimetext,jupyternotebooks
-# Edit at https://www.gitignore.io/?templates=linux,python,windows,sublimetext,jupyternotebooks
+# Created by https://www.gitignore.io/api/linux,macos,python,windows,sublimetext,jupyternotebooks,visualstudiocode
+# Edit at https://www.gitignore.io/?templates=linux,macos,python,windows,sublimetext,jupyternotebooks,visualstudiocode
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
@@ -30,6 +30,34 @@ ipython_config.py
 
 # .nfs files are created when an open file is removed but is still being accessed
 .nfs*
+
+### macOS ###
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
@@ -168,6 +196,17 @@ bh_unicode_properties.cache
 # https://packagecontrol.io/packages/sublime-github
 GitHub.sublime-settings
 
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+.history
+
 ### Windows ###
 # Windows thumbnail cache files
 Thumbs.db
@@ -194,10 +233,11 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.gitignore.io/api/linux,python,windows,sublimetext,jupyternotebooks
+# End of https://www.gitignore.io/api/linux,macos,python,windows,sublimetext,jupyternotebooks,visualstudiocodes
 
 .config
 .psychopy3
 data/**/*.csv
-*.code-workspace
+data/**/*.h5
 notebooks/tmp*.ipynb
+*.code-workspace

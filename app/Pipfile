@@ -4,6 +4,8 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [packages]
+glfw = "~=1.8.7"
+h5py = "~=2.9.0"
 muselsl = "~=2.0.2"
 pandas = "~=0.25.3"
 psychopy = "~=3.2.3"
