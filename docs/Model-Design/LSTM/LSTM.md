@@ -5,7 +5,8 @@ Unlike [1], which suffered from a heavy class imbalance, our method can produce 
 
 The model's input is a "batch" of samples. While the optimal batch size will need to be explored, we might be limited in the maximum batch size. With a 5-second window and 0.5-second samples, we can have at most 10 sequential samples in a batch. The batch size would be even smaller with larger sample sizes, which might be necessary for either the model or the featurization process to capture relevant temporal dynamics. One way to circumvent this problem while also possibly avoiding model overfitting would be to use the shuffling technique employed by [1], whereby a batch is constructed of non-consecutive samples.
 
-TODO: LSTM diagram
+## Diagrams
+[[resources/lstm_model.png]]
 
 ## References
 1. [Tsiouris, Κ. Μ., Pezoulas, V. C., Zervakis, M., Konitsiotis, S., Koutsouris, D. D., & Fotiadis, D. I. (2018). A Long Short-Term Memory deep learning network for the prediction of epileptic seizures using EEG signals. *Computers in Biology and Medicine*, 99, 24–37. doi: 10.1016/j.compbiomed.2018.05.019](https://www.sciencedirect.com/science/article/pii/S001048251830132X#cebib0010)

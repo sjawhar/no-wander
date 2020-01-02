@@ -23,6 +23,7 @@ def get_log_level(verbosity):
 
 
 parser = argparse.ArgumentParser(prog="no_wander")
+parser.set_defaults(min_verbosity=0)
 add_verbosity_arg(parser)
 
 subparsers = parser.add_subparsers(title="commands", description="valid commands")
@@ -42,6 +43,6 @@ process_setup_parser(parser_process)
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    logger.setLevel(get_log_level(args.verbose))
+    logger.setLevel(get_log_level(args.min_verbosity + args.verbose))
     logger.debug(f"Received args {args}")
     args.handler(args)

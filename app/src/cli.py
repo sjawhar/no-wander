@@ -62,6 +62,7 @@ def record_setup_parser(parser):
         default=False,
         help="Skip visualization and stability check",
     )
+    # TODO: Add subject argument
     file_group = parser.add_mutually_exclusive_group()
     file_group.add_argument(
         "-f", "--filename", help="Filename for recorded data",
@@ -86,6 +87,7 @@ def record_run(args):
     if args.filename:
         args.filename = Path.cwd() / args.filename
     else:
+        # TODO: Include subject
         args.filename = (
             DIR_DATA_DEFAULT
             / args.data_dir
@@ -109,6 +111,7 @@ def record_run(args):
 
 
 def process_setup_parser(parser):
+    parser.set_defaults(min_verbosity=1)
     parser.add_argument(
         "-d",
         "--data-dir",
