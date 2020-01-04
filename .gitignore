@@ -240,4 +240,5 @@ $RECYCLE.BIN/
 data/**/*.csv
 data/**/*.h5
 notebooks/tmp*.ipynb
+notebooks/*.png
 *.code-workspace
