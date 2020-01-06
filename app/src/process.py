@@ -107,9 +107,9 @@ def merge_sources(data, reindex=None):
     return merged
 
 
-def get_epochs(merged_df):
+def get_session_epochs(merged_df, session):
     logger.debug("Splitting merged data into epochs...")
-    session_epochs = ([], [])
+    session_epochs = []
     recoveries = merged_df.iloc[:, -1] == 1
     if not recoveries.any():
         logger.debug("No recoveries, skipping...")
@@ -123,11 +123,11 @@ def get_epochs(merged_df):
         logger.debug(f"Extracting epoch {i + 1} of {num_recoveries}...")
         recovery_ix = recoveries[i]
         min_ix = max(last_max, recovery_ix - EPOCH_SIZE_SAMPLES)
-        max_ix = min(num_readings, recovery_ix + EPOCH_SIZE_SAMPLES + 1)
+        max_ix = min(num_readings, recovery_ix + EPOCH_SIZE_SAMPLES)
 
         if i < num_recoveries - 1:
-            next_pre = int(recoveries[i + 1] - 0.5 * EPOCH_SIZE_SAMPLES)
-            if next_pre < recovery_ix:
+            next_pre = recoveries[i + 1] - EPOCH_SIZE_SAMPLES
+            if next_pre < recovery_ix + 0.5 * EPOCH_SIZE_SAMPLES:
                 logger.debug("Recovery point is too close to next epoch. Discarding...")
                 last_max = recovery_ix
                 continue
@@ -135,34 +135,43 @@ def get_epochs(merged_df):
                 logger.debug("Post-recovery window overlaps next epoch. Shortening...")
                 max_ix = next_pre
 
-        session_epochs[0].append(merged_df.iloc[min_ix:recovery_ix])
-        session_epochs[1].append(merged_df.iloc[recovery_ix:max_ix])
+        session_epochs.append(
+            (merged_df.iloc[min_ix:max_ix], recovery_ix - min_ix, session)
+        )
         last_max = max_ix
         logger.debug(f"Epoch {i + 1} has {max_ix - min_ix} timestamps")
 
     return session_epochs
 
 
-def save_epochs(sessions, destination):
+def get_train_test_split(epochs, test_split):
+    num_epochs = len(epochs)
+    test_ix = int((1 - test_split) * num_epochs)
+    logger.info(
+        f"Splitting epochs into {test_ix} train and {num_epochs - test_ix} test..."
+    )
+    shuffled = np.random.permutation(epochs)
+    return {"train": shuffled[:test_ix], "test": shuffled[test_ix:]}
+
+
+def save_epochs(epochs, destination):
     logger.info(f"Saving epochs to {destination}...")
     with h5py.File(destination, "w") as hf:
-        for session, epochs in sessions.items():
+        for epoch, recovery_ix, session in epochs:
+            data = epoch.drop(columns=[MARKER_DEFAULT])
+            dset_name = "-".join([str(int(ts)) for ts in data.index[[0, -1]]])
             date, chunk = session.split(".")[:2]
-            logger.debug(f"Saving epochs from session {date} chunk {chunk}...")
-            for window, epochset in epochs.items():
-                logger.debug(f"Saving {window}...")
-                for epoch in epochset:
-                    data = epoch.drop(columns=[MARKER_DEFAULT])
-                    dset_name = "-".join([str(int(ts)) for ts in data.index[[0, -1]]])
-                    logger.debug(f"Saving epoch {dset_name}...")
-                    dset = hf.create_dataset(
-                        dset_name, data=data.to_numpy(), compression="gzip",
-                    )
-                    dset.attrs["subject"] = 1
-                    dset.attrs["focus"] = window == WINDOW_POST_RECOVERY
-                    dset.attrs["columns"] = tuple(data.columns)
-                    dset.attrs["date"] = date
-                    dset.attrs["chunk"] = chunk
+            logger.debug(f"Saving epoch {dset_name} from date {date} chunk {chunk}...")
+
+            dset = hf.create_dataset(
+                dset_name, data=data.to_numpy(), compression="gzip",
+            )
+            dset.attrs["chunk"] = chunk
+            dset.attrs["columns"] = tuple(data.columns)
+            dset.attrs["date"] = date
+            dset.attrs["recovery"] = recovery_ix
+            # TODO: subject
+            dset.attrs["subject"] = 1
     logger.info("Epochs saved!")
 
 
@@ -173,7 +182,7 @@ def move_files(files, dest_dir):
         file.rename(dest_dir / file.name)
 
 
-def process_session_data(raw_files, output_dir, limit=None):
+def process_session_data(raw_files, output_dir, limit=None, test_split=0.2):
     if not len(raw_files):
         return
 
@@ -182,12 +191,11 @@ def process_session_data(raw_files, output_dir, limit=None):
         logger.debug(f"{epochs_dir} does not exist. Creating...")
         epochs_dir.mkdir()
 
-    epochs = {}
+    epochs = []
     processed_files = []
     ts_range = [float("inf"), 0]
     num_chunks = len(raw_files)
     processed_chunks = 0
-    num_epochs = 0
     logger.info(f"{num_chunks} session chunks to process. Starting...")
     for session, files in raw_files.items():
         logger.info(f"Processing session chunk {processed_chunks + 1}...")
@@ -195,15 +203,11 @@ def process_session_data(raw_files, output_dir, limit=None):
         try:
             data, eeg_data = load_session_data(files)
             merged_df = merge_sources(data, reindex=eeg_data)
-            pre, post = get_epochs(merged_df)
-            if len(pre) or len(post):
-                epochs[session.name] = {
-                    WINDOW_PRE_RECOVERY: pre,
-                    WINDOW_POST_RECOVERY: post,
-                }
+            session_epochs = get_session_epochs(merged_df, session.name)
+            if len(session_epochs):
+                epochs += session_epochs
                 ts_range[0] = min(ts_range[0], merged_df.index[0])
                 ts_range[1] = max(ts_range[1], merged_df.index[-1])
-                num_epochs += len(pre)
             processed_files += files
         except Exception as e:
             logger.exception(e)
@@ -215,10 +219,11 @@ def process_session_data(raw_files, output_dir, limit=None):
             logger.info(f"Limit of {limit} reached. Breaking...")
             break
 
-    logger.info(f"Collected {num_epochs} epochs across {processed_chunks}!")
+    logger.info(f"Collected {len(epochs)} epochs across {processed_chunks} chunks!")
     try:
-        dataset_name = "-".join([str(int(ts)) for ts in ts_range]) + ".h5"
-        save_epochs(epochs, output_dir / DIR_EPOCHS / dataset_name)
+        dataset_name = "-".join([str(int(ts)) for ts in ts_range])
+        for split, epochs in get_train_test_split(epochs, test_split).items():
+            save_epochs(epochs, output_dir / DIR_EPOCHS / f"{dataset_name}-{split}.h5")
         move_files(processed_files, output_dir / DIR_PROCESSED)
     except Exception as e:
         logger.exception(e)

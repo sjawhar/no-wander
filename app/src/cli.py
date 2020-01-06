@@ -125,6 +125,13 @@ def process_setup_parser(parser):
         default=None,
         help="Limit the number of processed files",
     )
+    parser.add_argument(
+        "-s",
+        "--test-split",
+        type=float,
+        default=0.2,
+        help="Percentage of data to reserve for testing",
+    )
 
 
 def process_run(args):
@@ -138,4 +145,6 @@ def process_run(args):
     logger.debug(f"Starting command process with args {args}")
 
     raw_files = get_files_by_session(args.data_dir)
-    process_session_data(raw_files, args.data_dir.parent, args.limit)
+    process_session_data(
+        raw_files, args.data_dir.parent, limit=args.limit, test_split=args.test_split
+    )
