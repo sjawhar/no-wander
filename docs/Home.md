@@ -26,13 +26,12 @@ I also refer to distraction as "mind-wandering", leading to the name of this pro
     * **ETA:** Q4 2019
 * **Phase 2b - Single Subject**
     * **Type:** Data Collection
-    * **Deliverable:** 500+ recorded recoveries from single subject
-    * **Status:** In Progress
-    * **ETA:** Q4 2019
+    * **Deliverable:** 1000+ recorded recoveries from single subject
+    * **Status:** Complete
 * **Phase 3 - Data Processing Pipeline**
     * **Type:** Engineering
     * **Deliverable:** Software to pre-process raw recorded data for learning
-    * **Status:** Unstarted
+    * **Status:** Started
     * **ETA:** Q1 2020
 * **Phase 4 - Model Training**
     * **Type:** Data Science

@@ -239,6 +239,7 @@ $RECYCLE.BIN/
 .psychopy3
 data/**/*.csv
 data/**/*.h5
+data/**/*.7z
 notebooks/tmp*.ipynb
 notebooks/*.png
 *.code-workspace

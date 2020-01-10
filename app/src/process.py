@@ -164,7 +164,7 @@ def save_epochs(epochs, destination):
             logger.debug(f"Saving epoch {dset_name} from date {date} chunk {chunk}...")
 
             dset = hf.create_dataset(
-                dset_name, data=data.to_numpy(), compression="gzip",
+                dset_name, data=data.to_numpy(), compression="gzip", compression_opts=9
             )
             dset.attrs["chunk"] = chunk
             dset.attrs["columns"] = tuple(data.columns)
