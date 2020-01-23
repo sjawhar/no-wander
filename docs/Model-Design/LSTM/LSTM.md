@@ -23,7 +23,7 @@ The benefits of the CNN are to reduce the dimensionality of the input to the LST
 
 ### LSTM with Engineered Features
 
-Tsiouris et al. showed that model performance can improve dramatically when trained on featurized data over raw data alone. We will replicate their LSTM network and feature extraction. We will also this approach a step further by attempting to identify which specific features most improved model performance, an analysis which was missing from the work by Tsiouris et al..
+Tsiouris et al. showed that model performance can improve dramatically when trained on featurized data over raw data alone. We ahve replicated their LSTM network and feature extraction. We extend this approach by attempting to identify which specific features most improved model performance, an analysis which was missing from the work by Tsiouris et al..
 
 For this model, we use a 1-second sample size. This larger size was chosen so that frequency domain features can capture. The below features are then extracted from each sample and used as the input to the LSTM. In other words, the LSTM does not receive any raw EEG data as direct input. We then shuffle the samples and construct 10-sample sequences as input to the LSTM. As in the original work, the LSTM has two layers of 128 units each. These are followed by a 30-unit fully-connected layer using ReLU activation, and finally a single-unit output layer using sigmoid activation. Also as in the original work, dropout and batch normalization are not used anywhere in the network.
 
