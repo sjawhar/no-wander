@@ -8,10 +8,18 @@ An LSTM model's input is a sequence of samples. While the optimal sequence size 
 We will test three different variants of LSTM networks.
 
 ### LSTM
-TODO
+The first model variant is a pure LSTM. We will experiment with the number of units (32, 64, 128) and layers (one or two) to ensure the model has enough capacity to fully represent the task being learned. The final (or only) LSTM layer feeds to a 32-unit fully-connected layer using ReLU activation followed by a single-unit output sigmoid layer. Dropout is used on the input to the LSTM, and each LSTM and fully-connected layer is followed by an "independent-component (IC) layer,"<sup>[[2](https://arxiv.org/abs/1905.05928)]</sup> actually a combination of batch normalization and dropout layers. A dropout rate of 0.2 is used for all dropout layers.
 
-### CNN + LSTM
-TODO
+The input to this network is the raw, unprocessed data recorded from the Muse 2. This includes EEG, PPG, accelerometer, and gyroscope readings. Epochs are split into 0.5 second epochs with pre, post, and uncertainty window sizes of 6, 3, and 1, respectively. Grouping samples into 6-sample sequences yields two distraction sequences and one focus sequence per epoch.
+
+[[resources/model_lstm.png]]
+
+### LSTM with CNN
+The second model variant is very similar to the pure LSTM variant, except that it includes a 1-D convolutional layer with 128 filters (the CNN) between the raw input and the LSTM input. The input to this network is the same as the pure LSTM, except that the full 3-second sequence is fed as input to the CNN instead of chunking into sequences for the LSTM. This produces an input sequence to the LSTM whose size depends on the parameters of the CNN (number of filters, stride sizes).
+
+The benefits of the CNN are to reduce the dimensionality of the input to the LSTM, and therefore reduces the number of trainable parameters, while also extracting time-invariant features of the input. The drawback is that it increases the LSTM sequence length, which can reduce model performance.
+
+[[resources/model_lstm_cnn.png]]
 
 ### LSTM with Engineered Features
 
@@ -48,10 +56,8 @@ For this model, we use a 1-second sample size. This larger size was chosen so th
 | Graph theory     | Graph radius                                  | 1                                    | See above                                                   |
 | Graph theory     | Graph diameter                                | 1                                    | See above                                                   |
 
-TODO: Diagram
-
-## Diagrams
-[[resources/lstm_model.png]]
+[[resources/model_lstm_feature.png]]
 
 ## References
 1. [Tsiouris, Κ. Μ., Pezoulas, V. C., Zervakis, M., Konitsiotis, S., Koutsouris, D. D., & Fotiadis, D. I. (2018). A Long Short-Term Memory deep learning network for the prediction of epileptic seizures using EEG signals. *Computers in Biology and Medicine*, 99, 24–37. doi: 10.1016/j.compbiomed.2018.05.019](https://www.sciencedirect.com/science/article/pii/S001048251830132X#cebib0010)
+2. [Chen, G., Chen, P., Shi, Y., Hsieh, C. Y., Liao, B., & Zhang, S. (2019). Rethinking the Usage of Batch Normalization and Dropout in the Training of Deep Neural Networks. *arXiv preprint arXiv:1905.05928*.](https://arxiv.org/abs/1905.05928)
