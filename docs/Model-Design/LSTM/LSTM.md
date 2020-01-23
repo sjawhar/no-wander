@@ -28,7 +28,7 @@ Tsiouris et al. showed that model performance can improve dramatically when trai
 For this model, we use a 1-second sample size. This larger size was chosen so that frequency domain features can capture. The below features are then extracted from each sample and used as the input to the LSTM. In other words, the LSTM does not receive any raw EEG data as direct input. We then shuffle the samples and construct 10-sample sequences as input to the LSTM. As in the original work, the LSTM has two layers of 128 units each. These are followed by a 30-unit fully-connected layer using ReLU activation, and finally a single-unit output layer using sigmoid activation. Also as in the original work, dropout and batch normalization are not used anywhere in the network.
 
 | Feature Type     | Feature                                       | Count                                | Notes                                                       |
-| ---------------- | --------------------------------------------- | ------------------------------------ | ------------------------------------------------------------|
+| ---------------- | --------------------------------------------- | ------------------------------------ | ----------------------------------------------------------- |
 | Time domain      | Mean                                          | 1 per channel                        |                                                             |
 | Time domain      | Variance                                      | 1 per channel                        |                                                             |
 | Time domain      | Standard Deviation                            | 1 per channel                        |                                                             |
@@ -38,12 +38,12 @@ For this model, we use a 1-second sample size. This larger size was chosen so th
 | Time domain      | Difference between maximum and minimum values | 1 per channel                        |                                                             |
 | Time domain      | Absolute area under curve                     | 1 per channel                        |                                                             |
 | Frequency domain | Total power                                   | 1 per channel                        |                                                             |
-| Frequency domain | % power in Delta band                         | 1 per channel                        | 0Hz $\le f \lt$ 4Hz                                         |
-| Frequency domain | % power in Theta band                         | 1 per channel                        | 4Hz $\le f \lt$ 8Hz                                         |
-| Frequency domain | % power in Alpha band                         | 1 per channel                        | 8Hz $\le f \lt$ 14Hz                                        |
-| Frequency domain | % power in Beta band                          | 1 per channel                        | 14Hz $\le f \lt$ 30Hz                                       |
-| Frequency domain | % power in Gamma1 band                        | 1 per channel                        | 30Hz $\le f \lt$ 65Hz                                       |
-| Frequency domain | % power in Gamma2 band                        | 1 per channel                        | 65Hz $\le f \lt$ 110Hz                                      |
+| Frequency domain | % power in Delta band                         | 1 per channel                        | 0Hz ≤ f < 4Hz                                               |
+| Frequency domain | % power in Theta band                         | 1 per channel                        | 4Hz ≤ f < 8Hz                                               |
+| Frequency domain | % power in Alpha band                         | 1 per channel                        | 8Hz ≤ f < 14Hz                                              |
+| Frequency domain | % power in Beta band                          | 1 per channel                        | 14Hz ≤ f < 30Hz                                             |
+| Frequency domain | % power in Gamma1 band                        | 1 per channel                        | 30Hz ≤ f < 65Hz                                             |
+| Frequency domain | % power in Gamma2 band                        | 1 per channel                        | 65Hz ≤ f < 110Hz                                            |
 | Frequency domain | Discrete wavelet transform coefficients       | 16 per channel (8 approx + 8 detail) | 7-level decomposition, Daubechies 4 mother wavelet          |
 | Correlation      | Maximum time-lagged pairwise correlation      | Number of channel pairs              |                                                             |
 | Correlation      | Decorrelation time                            | 1 per channel                        | Time to first zero-crossing in autocorrelation function     |
