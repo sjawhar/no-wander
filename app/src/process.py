@@ -1,21 +1,21 @@
-import h5py
 import logging
 import numpy as np
 import pandas as pd
-from muselsl.constants import MUSE_SAMPLING_EEG_RATE
 from pathlib import PurePath
+from .datasets import save_epochs
 from .constants import (
     DIR_EPOCHS,
     DIR_FAILED,
     DIR_PROCESSED,
     MARKER_RECOVER,
     PACKAGE_NAME,
+    SAMPLE_RATE,
     SOURCE_EEG,
 )
 
 DEBOUNCE_SECONDS = 1
 EPOCH_SIZE_SECONDS = 10
-EPOCH_SIZE_SAMPLES = MUSE_SAMPLING_EEG_RATE * EPOCH_SIZE_SECONDS
+EPOCH_SIZE_SAMPLES = SAMPLE_RATE * EPOCH_SIZE_SECONDS
 EVENT_RECOVERY = "Recovery"
 MARKER_PREFIX = "Marker"
 MARKER_DEFAULT = f"{MARKER_PREFIX}0"
@@ -154,27 +154,6 @@ def get_train_test_split(epochs, test_split):
     return {"train": shuffled[:test_ix], "test": shuffled[test_ix:]}
 
 
-def save_epochs(epochs, destination):
-    logger.info(f"Saving epochs to {destination}...")
-    with h5py.File(destination, "w") as hf:
-        for epoch, recovery_ix, session in epochs:
-            data = epoch.drop(columns=[MARKER_DEFAULT])
-            dset_name = "-".join([str(int(ts)) for ts in data.index[[0, -1]]])
-            date, chunk = session.split(".")[:2]
-            logger.debug(f"Saving epoch {dset_name} from date {date} chunk {chunk}...")
-
-            dset = hf.create_dataset(
-                dset_name, data=data.to_numpy(), compression="gzip", compression_opts=9
-            )
-            dset.attrs["chunk"] = chunk
-            dset.attrs["columns"] = tuple(data.columns)
-            dset.attrs["date"] = date
-            dset.attrs["recovery"] = recovery_ix
-            # TODO: subject
-            dset.attrs["subject"] = 1
-    logger.info("Epochs saved!")
-
-
 def move_files(files, dest_dir):
     if not dest_dir.exists():
         dest_dir.mkdir()
@@ -223,7 +202,7 @@ def process_session_data(raw_files, output_dir, limit=None, test_split=0.2):
     try:
         dataset_name = "-".join([str(int(ts)) for ts in ts_range])
         for split, epochs in get_train_test_split(epochs, test_split).items():
-            save_epochs(epochs, output_dir / DIR_EPOCHS / f"{dataset_name}-{split}.h5")
+            save_epochs(output_dir / DIR_EPOCHS / f"{dataset_name}-{split}.h5", epochs)
         move_files(processed_files, output_dir / DIR_PROCESSED)
     except Exception as e:
         logger.exception(e)
