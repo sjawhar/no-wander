@@ -12,7 +12,7 @@ logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
 def parse_dataset(filepath):
     features = {}
 
-    with h5py.File(filepath) as hf:
+    with h5py.File(filepath, "r") as hf:
         data = [None] * len(hf)
         i = 0
         for dset in hf.values():

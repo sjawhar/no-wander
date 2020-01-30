@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 from keras.optimizers import Adam
 from keras.utils import plot_model
 from pathlib import Path
@@ -16,13 +17,14 @@ logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
 
 def get_samples(data_file, sample_size, extract_features):
     samples, labels, features = read_dataset(data_file, sample_size)
-    input_shape = (sequence_size, sample_size * len(features))
 
     logger.info(f"{len(samples)} samples in training set")
     logger.info(f"All seen features: {', '.join(features)}")
 
     if extract_features:
-        samples, features = extract_eeg_features(X, features)
+        from .extract import extract_eeg_features
+
+        samples, features = extract_eeg_features(samples, features)
         logger.info(f"Extracted features: {', '.join(features)}")
 
     return samples, labels, features
