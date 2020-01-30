@@ -56,9 +56,9 @@ def build_and_train_model(
     sample_size,
     sequence_size,
     lstm_layers,
-    extract_features=False,
     conv1d_params=None,
     dense_params=None,
+    extract_features=False,
     # Learning rate params
     learning_rate=LEARNING_RATE,
     beta_one=BETA_ONE,
