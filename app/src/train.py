@@ -31,7 +31,9 @@ def get_samples(data_file, sample_size, extract_features):
 
 
 def get_sequences(samples, labels, input_shape, shuffle_samples):
+    logger.info(f"Forming sequences of length {input_shape[0]}...")
     if shuffle_samples:
+        logger.debug("Shuffling samples...")
         shuffle = np.random.permutation(samples.shape[0])
         samples = samples[shuffle]
         labels = labels[shufle]
@@ -48,6 +50,7 @@ def get_sequences(samples, labels, input_shape, shuffle_samples):
     X = np.concatenate(X)
     Y = np.ones((X.shape[0], 1))
     Y[:miss_size] = 0
+    logger.info(f"Formed {Y.size} sequences! {miss_size} miss / {int(Y.sum())} hit")
     return np.nan_to_num(X, 0), Y
 
 
@@ -81,6 +84,7 @@ def build_and_train_model(
     model_dir = Path(model_dir)
     if not model_dir.exists():
         model_dir.mkdir()
+    logger.debug(f"Saving model files to {model_dir}")
 
     model = get_lstm_model(
         input_shape,
@@ -97,6 +101,12 @@ def build_and_train_model(
     model.compile(opt, loss="binary_crossentropy", metrics=["accuracy"])
 
     X, Y = get_sequences(samples, labels, input_shape, shuffle_samples)
-    model.fit(
-        X, Y, epochs=epochs, batch_size=batch_size, **fit_args,
-    )
+    if epochs:
+        model.fit(
+            X, Y, epochs=epochs, batch_size=batch_size, **fit_args,
+        )
+
+    model_path = model_dir / "model.h5"
+    logger.info(f"Saving model to {model_path}...")
+    model.save(model_path)
+    logger.info("Done!")

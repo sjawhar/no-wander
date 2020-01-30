@@ -78,8 +78,7 @@ def samples_to_tensors(samples, data_shape):
 
 
 def read_dataset(filepath, sample_size):
-    import numpy as np
-
+    logger.info(f"Reading datasets from {filepath}...")
     data, features = parse_dataset(filepath)
     samples, num_samples = get_samples(data, sample_size)
     X, Y = samples_to_tensors(samples, (num_samples, sample_size, len(features)))
