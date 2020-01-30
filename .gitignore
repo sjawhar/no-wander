@@ -240,6 +240,8 @@ $RECYCLE.BIN/
 data/**/*.csv
 data/**/*.h5
 data/**/*.7z
+models/**/*.h5
+models/**/*.png
 notebooks/tmp*.ipynb
 notebooks/*.png
 *.code-workspace

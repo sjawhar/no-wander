@@ -36,7 +36,7 @@ def get_sequences(samples, labels, input_shape, shuffle_samples):
         logger.debug("Shuffling samples...")
         shuffle = np.random.permutation(samples.shape[0])
         samples = samples[shuffle]
-        labels = labels[shufle]
+        labels = labels[shuffle]
 
     X = []
     for label in [0, 1]:
