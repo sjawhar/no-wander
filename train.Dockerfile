@@ -16,9 +16,11 @@ RUN DEV_PACKAGES=" \
         pandas \
         pydot \
         PyWavelets \
+        sklearn \
  && apt-get remove --purge -y $DEV_PACKAGES \
  && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash -u 1000 tf
+RUN groupadd --gid 1000 tf \
+ && useradd --create-home --shell /bin/bash --uid 1000 --gid tf tf
 WORKDIR /home/tf
 USER tf

@@ -3,6 +3,7 @@ import numpy as np
 from keras.optimizers import Adam
 from keras.utils import plot_model
 from pathlib import Path
+from sklearn.model_selection import train_test_split
 from .datasets import read_dataset
 from .models import get_lstm_model
 from .constants import PACKAGE_NAME
@@ -11,6 +12,7 @@ LEARNING_RATE = 0.1
 BETA_ONE = 0.9
 BETA_TWO = 0.999
 DECAY = 0.01
+RANDOM_SEED = 42
 
 logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
 
@@ -34,6 +36,7 @@ def get_sequences(samples, labels, input_shape, shuffle_samples):
     logger.info(f"Forming sequences of length {input_shape[0]}...")
     if shuffle_samples:
         logger.debug("Shuffling samples...")
+        np.random.seed(RANDOM_SEED)
         shuffle = np.random.permutation(samples.shape[0])
         samples = samples[shuffle]
         labels = labels[shuffle]
@@ -54,7 +57,31 @@ def get_sequences(samples, labels, input_shape, shuffle_samples):
     return np.nan_to_num(X, 0), Y
 
 
-def plot_history(history, model_dir):
+def train_model(
+    model,
+    X,
+    Y,
+    test_size=0,
+    learning_rate=LEARNING_RATE,
+    beta_one=BETA_ONE,
+    beta_two=BETA_TWO,
+    decay=DECAY,
+    **kwargs,
+):
+    validation_data = None
+    if test_size:
+        logger.info(f"Splitting {int(test_size * 100)}% of data for validation")
+        X, X_test, Y, Y_test = train_test_split(
+            X, Y, test_size=test_size, random_state=RANDOM_SEED
+        )
+        validation_data = (X_test, Y_test)
+
+    opt = Adam(learning_rate, beta_one, beta_two, decay)
+    model.compile(opt, loss="binary_crossentropy", metrics=["accuracy"])
+    return model.fit(X, Y, validation_data=validation_data, **kwargs)
+
+
+def plot_training_history(history, model_dir):
     import matplotlib.pyplot as plt
 
     for metric in ["accuracy", "loss"]:
@@ -80,17 +107,10 @@ def build_and_train_model(
     lstm_layers,
     conv1d_params=None,
     dense_params=None,
+    # Data prep params
     extract_features=False,
-    # Learning rate params
-    learning_rate=LEARNING_RATE,
-    beta_one=BETA_ONE,
-    beta_two=BETA_TWO,
-    decay=DECAY,
-    # Fit params
     shuffle_samples=False,
-    epochs=100,
-    batch_size=32,
-    **fit_args,
+    **train_args,
 ):
     samples, labels, features = get_samples(data_file, sample_size, extract_features)
     input_shape = (
@@ -114,20 +134,11 @@ def build_and_train_model(
         model, to_file=model_dir / "model.png", show_shapes=True, show_layer_names=True
     )
 
-    opt = Adam(learning_rate, beta_one, beta_two, decay)
-    model.compile(opt, loss="binary_crossentropy", metrics=["accuracy"])
+    if train_args.get("epochs"):
+        X, Y = get_sequences(samples, labels, input_shape, shuffle_samples)
 
-    X, Y = get_sequences(samples, labels, input_shape, shuffle_samples)
-    if epochs:
-        history = model.fit(
-            X,
-            Y,
-            epochs=epochs,
-            batch_size=batch_size,
-            validation_split=0.25,
-            **fit_args,
-        )
-        plot_history(history, model_dir)
+        history = train_model(model, X, Y, **train_args)
+        plot_training_history(history, model_dir)
 
     model_path = model_dir / "model.h5"
     logger.info(f"Saving model to {model_path}...")

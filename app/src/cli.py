@@ -173,7 +173,7 @@ def train_setup_parser(parser):
         "-d", "--dense", dest="dense_params", type=type_json,
     )
     parser.add_argument(
-        "-e", "--extract-features", action="store_const", const=True, default=False,
+        "-f", "--extract-features", action="store_const", const=True, default=False,
     )
     parser.add_argument(
         "--learning-rate", type=float,
@@ -191,10 +191,13 @@ def train_setup_parser(parser):
         "--shuffle-samples", action="store_const", const=True, default=False,
     )
     parser.add_argument(
-        "--epochs", type=int,
+        "-t", "--test-size", type=float, default=0,
     )
     parser.add_argument(
-        "--batch-size", type=int,
+        "-e", "--epochs", type=int, default=1,
+    )
+    parser.add_argument(
+        "-b", "--batch-size", type=int,
     )
 
 
