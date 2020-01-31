@@ -54,6 +54,23 @@ def get_sequences(samples, labels, input_shape, shuffle_samples):
     return np.nan_to_num(X, 0), Y
 
 
+def plot_history(history, model_dir):
+    import matplotlib.pyplot as plt
+
+    for metric in ["accuracy", "loss"]:
+        plt.plot(history.history[metric])
+        plt.plot(history.history[f"val_{metric}"])
+        plt.title(f"Model {metric}")
+        plt.ylabel(metric)
+        plt.xlabel("epoch")
+        plt.legend(["Train", "Validation"], loc="upper left")
+        figpath = model_dir / f"{metric}.png"
+
+        logger.info(f"Saving {metric} chart to {figpath}...")
+        plt.savefig(figpath, bbox_inches="tight")
+        plt.close()
+
+
 def build_and_train_model(
     data_file,
     model_dir,
@@ -81,7 +98,7 @@ def build_and_train_model(
         len(features) * (1 if extract_features else sample_size),
     )
 
-    model_dir = Path(model_dir)
+    model_dir = Path(model_dir).resolve()
     if not model_dir.exists():
         model_dir.mkdir()
     logger.debug(f"Saving model files to {model_dir}")
@@ -102,9 +119,15 @@ def build_and_train_model(
 
     X, Y = get_sequences(samples, labels, input_shape, shuffle_samples)
     if epochs:
-        model.fit(
-            X, Y, epochs=epochs, batch_size=batch_size, **fit_args,
+        history = model.fit(
+            X,
+            Y,
+            epochs=epochs,
+            batch_size=batch_size,
+            validation_split=0.25,
+            **fit_args,
         )
+        plot_history(history, model_dir)
 
     model_path = model_dir / "model.h5"
     logger.info(f"Saving model to {model_path}...")
