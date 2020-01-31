@@ -155,6 +155,7 @@ def process_run(args):
 
 
 def train_setup_parser(parser):
+    parser.set_defaults(allow_unknown_args=True)
     parser.add_argument("data_file")
     parser.add_argument("model_dir")
     parser.add_argument(
@@ -201,10 +202,10 @@ def train_setup_parser(parser):
     )
 
 
-def train_run(args):
+def train_run(args, **kwargs):
     from .train import build_and_train_model
 
-    kwargs = {k: v for k, v in vars(args).items() if v is not None}
+    kwargs.update({k: v for k, v in vars(args).items() if v is not None})
     build_and_train_model(
         kwargs.pop("data_file"),
         kwargs.pop("model_dir"),
