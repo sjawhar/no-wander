@@ -61,7 +61,7 @@ def train_model(
     model,
     X,
     Y,
-    test_size=0,
+    test_split=0,
     learning_rate=LEARNING_RATE,
     beta_one=BETA_ONE,
     beta_two=BETA_TWO,
@@ -69,10 +69,10 @@ def train_model(
     **kwargs,
 ):
     validation_data = None
-    if test_size:
-        logger.info(f"Splitting {int(test_size * 100)}% of data for validation")
+    if test_split:
+        logger.info(f"Splitting {int(test_split * 100)}% of data for validation")
         X, X_test, Y, Y_test = train_test_split(
-            X, Y, test_size=test_size, random_state=RANDOM_SEED
+            X, Y, test_size=test_split, random_state=RANDOM_SEED
         )
         validation_data = (X_test, Y_test)
 
@@ -86,13 +86,18 @@ def plot_training_history(history, model_dir):
 
     for metric in ["accuracy", "loss"]:
         plt.plot(history.history[metric])
-        plt.plot(history.history[f"val_{metric}"])
         plt.title(f"Model {metric}")
         plt.ylabel(metric)
         plt.xlabel("epoch")
-        plt.legend(["Train", "Validation"], loc="upper left")
-        figpath = model_dir / f"{metric}.png"
 
+        legend = ["Train"]
+        val_metric = history.history.get(f"val_{metric}", None)
+        if val_metric is not None:
+            plt.plot(val_metric)
+            legend.append("Validation")
+        plt.legend(legend, loc="upper left")
+
+        figpath = model_dir / f"{metric}.png"
         logger.info(f"Saving {metric} chart to {figpath}...")
         plt.savefig(figpath, bbox_inches="tight")
         plt.close()
@@ -106,7 +111,7 @@ def build_and_train_model(
     sequence_size,
     lstm_layers,
     conv1d_params=None,
-    dense_params=None,
+    dense_params={},
     # Data prep params
     extract_features=False,
     shuffle_samples=False,

@@ -23,6 +23,9 @@ def type_json(json_str):
 
 def record_setup_parser(parser):
     parser.add_argument(
+        "DURATION", type=int, help="Length of the meditation session in minutes",
+    )
+    parser.add_argument(
         "-a", "--address", help="Skip search and stream from specified address",
     )
     parser.add_argument(
@@ -32,13 +35,6 @@ def record_setup_parser(parser):
         action="append_const",
         const=SOURCE_ACC,
         help="Record accelerometer measurements",
-    )
-    parser.add_argument(
-        "-d",
-        "--duration",
-        type=int,
-        required=True,
-        help="Length of the meditation session in minutes",
     )
     parser.add_argument(
         "--no-eeg",
@@ -112,27 +108,23 @@ def record_run(args):
     if not args.skip_visualize:
         visualize()
 
-    run_session(get_duration(args.duration), args.sources, args.filename)
+    run_session(get_duration(args.DURATION), args.sources, args.filename)
     end_stream()
 
 
 def process_setup_parser(parser):
     parser.set_defaults(min_verbosity=1)
     parser.add_argument(
-        "-d",
-        "--data-dir",
+        "DATA_DIR",
+        nargs="?",
         default=DIR_DATA_DEFAULT / DIR_INPUT,
         help="Directory containing data files",
     )
     parser.add_argument(
-        "-l",
-        "--limit",
-        type=int,
-        default=None,
-        help="Limit the number of processed files",
+        "-l", "--limit", type=int, help="Limit the number of processed files",
     )
     parser.add_argument(
-        "-s",
+        "-t",
         "--test-split",
         type=float,
         default=0.2,
@@ -143,63 +135,97 @@ def process_setup_parser(parser):
 def process_run(args):
     from .process import get_files_by_session, process_session_data
 
-    if type(args.data_dir) is str:
-        args.data_dir = Path.cwd() / args.data_dir
+    if type(args.DATA_DIR) is str:
+        args.DATA_DIR = Path(args.DATA_DIR)
+    args.DATA_DIR = args.DATA_DIR.resolve()
 
     logger.debug(f"Starting command process with args {args}")
 
-    raw_files = get_files_by_session(args.data_dir)
+    raw_files = get_files_by_session(args.DATA_DIR)
     process_session_data(
-        raw_files, args.data_dir.parent, limit=args.limit, test_split=args.test_split
+        raw_files, args.DATA_DIR.parent, limit=args.limit, test_split=args.test_split
     )
 
 
 def train_setup_parser(parser):
     parser.set_defaults(allow_unknown_args=True)
-    parser.add_argument("data_file")
-    parser.add_argument("model_dir")
     parser.add_argument(
-        "-s", "--sample-size", type=int, required=True,
+        "MODEL_DIR", help="Directory in which to save built model and images"
+    )
+    parser.add_argument("DATA_FILE", help="Path to h5 file with labeled epochs")
+    parser.add_argument(
+        "-s",
+        "--sample-size",
+        type=int,
+        required=True,
+        help="Number of readings/timesteps per sample",
     )
     parser.add_argument(
-        "-q", "--sequence-size", type=int, required=True,
+        "-q",
+        "--sequence-size",
+        type=int,
+        required=True,
+        help="Number of samples per LSTM sequence",
     )
     parser.add_argument(
-        "-l", "--lstm", dest="lstm_layers", type=type_json, required=True,
+        "-l",
+        "--lstm",
+        dest="lstm_layers",
+        type=type_json,
+        required=True,
+        help="JSON array of LSTM parameters to pass to LSTM(). ic_params controls IC layer after activation.",
     )
     parser.add_argument(
-        "-c", "--conv1d", dest="conv1d_params", type=type_json,
+        "-c",
+        "--conv1d",
+        dest="conv1d_params",
+        type=type_json,
+        help="JSON object of parameters to pass to Conv1D(). ic_params controls IC layer after activation.",
     )
     parser.add_argument(
-        "-d", "--dense", dest="dense_params", type=type_json,
+        "-d",
+        "--dense",
+        dest="dense_params",
+        type=type_json,
+        default={},
+        help="JSON object of parameters to pass to Dense(). ic_params controls IC layer after activation.",
     )
     parser.add_argument(
-        "-f", "--extract-features", action="store_const", const=True, default=False,
+        "-f",
+        "--extract-features",
+        action="store_const",
+        const=True,
+        default=False,
+        help="Use feature extractor instead of raw EEG",
     )
     parser.add_argument(
-        "--learning-rate", type=float,
+        "--learning-rate", type=float, help="learning_rate parameter for optimizer"
     )
     parser.add_argument(
-        "--beta-one", type=float,
+        "--beta-one", type=float, help="beta_one parameter for optimizer"
     )
     parser.add_argument(
-        "--beta-two", type=float,
+        "--beta-two", type=float, help="beta_two parameter for optimizer"
+    )
+    parser.add_argument("--decay", type=float, help="decay parameter for optimizer")
+    parser.add_argument(
+        "--shuffle-samples",
+        action="store_const",
+        const=True,
+        default=False,
+        help="Shuffle samples before constructing LSTM sequences",
     )
     parser.add_argument(
-        "--decay", type=float,
+        "-t",
+        "--test-split",
+        type=float,
+        default=0,
+        help="Percentage of data in data_file to use for validation",
     )
     parser.add_argument(
-        "--shuffle-samples", action="store_const", const=True, default=False,
+        "-e", "--epochs", type=int, default=1, help="Number of training epochs"
     )
-    parser.add_argument(
-        "-t", "--test-size", type=float, default=0,
-    )
-    parser.add_argument(
-        "-e", "--epochs", type=int, default=1,
-    )
-    parser.add_argument(
-        "-b", "--batch-size", type=int,
-    )
+    parser.add_argument("-b", "--batch-size", type=int, help="Training batch size")
 
 
 def train_run(args, **kwargs):
@@ -207,8 +233,8 @@ def train_run(args, **kwargs):
 
     kwargs.update({k: v for k, v in vars(args).items() if v is not None})
     build_and_train_model(
-        kwargs.pop("data_file"),
-        kwargs.pop("model_dir"),
+        kwargs.pop("DATA_FILE"),
+        kwargs.pop("MODEL_DIR"),
         kwargs.pop("sample_size"),
         kwargs.pop("sequence_size"),
         kwargs.pop("lstm_layers"),
