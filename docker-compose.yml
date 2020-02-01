@@ -20,7 +20,6 @@ services:
     network_mode: host
     privileged: true
     entrypoint: [python3, -m, no_wander, record]
-    command: [--duration, '20']
 
   process:
     build: .
@@ -31,13 +30,33 @@ services:
       - ./data:/home/muselsl/data
     entrypoint: [python3, -m, no_wander, process]
 
+  train:
+    build:
+      context: .
+      dockerfile: train.Dockerfile
+    image: sjawhar/no-wander:train
+    container_name: no-wander-train
+    volumes:
+      - ./app/src:/home/tf/no_wander
+      - ./data:/home/tf/data
+      - ./models:/home/tf/models
+    entrypoint: [python3, -m, no_wander, train]
+
   notebook:
-    image: jupyter/tensorflow-notebook
+    build:
+      context: .
+      dockerfile: train.Dockerfile
+    image: sjawhar/no-wander:train
     container_name: no-wander-notebook
     volumes:
-      - ./app/src:/home/jovyan/work/no_wander
-      - ./data:/home/jovyan/work/data
-      - ./notebooks:/home/jovyan/work/notebooks
+      - ./app/src:/home/tf/no_wander
+      - ./data:/home/tf/data
+      - ./notebooks:/home/tf/notebooks
     ports:
       - 8888:8888
-    command: [start.sh, jupyter, lab, --LabApp.token='']
+    command:
+      - jupyter
+      - lab
+      - --LabApp.token=''
+      - --ip=0.0.0.0
+      - --no-browser
