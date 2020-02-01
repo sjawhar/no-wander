@@ -30,16 +30,16 @@ def get_log_level(verbosity):
     return logging.WARNING
 
 
-def get_kwargs(remaining):
+def get_kwargs(extra_args):
     kwargs = {}
     key = None
-    while len(remaining) > 0:
-        val = remaining.pop(0)
+    while len(extra_args) > 0:
+        val = extra_args.pop(0)
 
         if val.startswith("--"):
             val = val.split("=")
             if len(val) > 1:
-                remaining = val[1:] + remaining
+                extra_args = val[1:] + extra_args
 
             key = val[0].lstrip("-").replace("-", "_").lower()
             if key not in kwargs:
@@ -66,7 +66,7 @@ commands = [
     ("record", "Record meditation session", record_setup_parser, record_run),
     (
         "process",
-        "Merge sources for recorded sessions",
+        "Extract epochs from recorded sessions",
         process_setup_parser,
         process_run,
     ),
