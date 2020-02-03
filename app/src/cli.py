@@ -130,6 +130,11 @@ def process_setup_parser(parser):
         default=0.2,
         help="Percentage of data to reserve for testing",
     )
+    parser.add_argument(
+        "-x",
+        "--aux-channel",
+        help="Channel name for Right Aux. Must be provided if Right Aux has data, otherwise channel is dropped.",
+    )
 
 
 def process_run(args):
@@ -141,18 +146,19 @@ def process_run(args):
 
     logger.debug(f"Starting command process with args {args}")
 
-    raw_files = get_files_by_session(args.DATA_DIR)
-    process_session_data(
-        raw_files, args.DATA_DIR.parent, limit=args.limit, test_split=args.test_split
-    )
+    kwargs = {k: v for k, v in vars(args).items() if v is not None}
+    data_dir = kwargs.pop("DATA_DIR")
+
+    raw_files = get_files_by_session(data_dir)
+    process_session_data(raw_files, data_dir.parent, **kwargs)
 
 
 def train_setup_parser(parser):
     parser.set_defaults(allow_unknown_args=True)
+    parser.add_argument("DATA_FILE", help="Path to h5 file with labeled epochs")
     parser.add_argument(
         "MODEL_DIR", help="Directory in which to save built model and images"
     )
-    parser.add_argument("DATA_FILE", help="Path to h5 file with labeled epochs")
     parser.add_argument(
         "-s",
         "--sample-size",

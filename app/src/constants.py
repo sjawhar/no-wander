@@ -1,5 +1,9 @@
 from pathlib import Path
 
+COL_MARKER_PREFIX = "Marker"
+COL_MARKER_DEFAULT = f"{COL_MARKER_PREFIX}0"
+COL_RIGHT_AUX = "EEG_Right AUX"
+
 DIR_DATA_DEFAULT = Path.cwd() / "data"
 DIR_EPOCHS = "epochs"
 DIR_FAILED = "failed"

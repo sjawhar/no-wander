@@ -4,10 +4,12 @@ import pandas as pd
 from pathlib import PurePath
 from .datasets import save_epochs
 from .constants import (
+    COL_MARKER_DEFAULT,
+    COL_MARKER_PREFIX,
+    COL_RIGHT_AUX,
     DIR_EPOCHS,
     DIR_FAILED,
     DIR_PROCESSED,
-    MARKER_RECOVER,
     PACKAGE_NAME,
     SAMPLE_RATE,
     SOURCE_EEG,
@@ -17,8 +19,6 @@ DEBOUNCE_SECONDS = 1
 EPOCH_SIZE_SECONDS = 10
 EPOCH_SIZE_SAMPLES = SAMPLE_RATE * EPOCH_SIZE_SECONDS
 EVENT_RECOVERY = "Recovery"
-MARKER_PREFIX = "Marker"
-MARKER_DEFAULT = f"{MARKER_PREFIX}0"
 WINDOW_POST_RECOVERY = "WINDOW_POST_RECOVERY"
 WINDOW_PRE_RECOVERY = "WINDOW_PRE_RECOVERY"
 
@@ -48,26 +48,41 @@ def get_files_by_session(data_dir):
 
 def get_renamer(s, i):
     return (
-        lambda x: f"{MARKER_PREFIX}{i}"
-        if x == MARKER_DEFAULT
+        lambda x: f"{COL_MARKER_PREFIX}{i}"
+        if x == COL_MARKER_DEFAULT
         else f'{s}_{x.replace(" ", "_")}'
     )
 
 
-def load_session_data(files):
+def load_session_data(files, aux_channel=None):
     logger.debug("Loading session data...")
     num_files = len(files)
     data = [None] * num_files
     eeg_data = None
     for i in range(num_files):
-        file = files[i]
-        logger.debug(f"Reading {file} to dataframe...")
-        source = file.name.split(".")[-3]
-        df = pd.read_csv(file, index_col=0)
+        datafile = files[i]
+        logger.debug(f"Reading {datafile} to dataframe...")
+        source = datafile.name.split(".")[-3]
+        df = pd.read_csv(datafile, index_col=0)
         df.rename(columns=get_renamer(source, i), inplace=True)
         data[i] = df
         if source == SOURCE_EEG:
             eeg_data = df
+
+        if not COL_RIGHT_AUX in df.columns:
+            continue
+        elif aux_channel:
+            logger.debug(f"Renaming {COL_RIGHT_AUX} to {aux_channel}...")
+            df.rename(columns={COL_RIGHT_AUX: aux_channel}, inplace=True)
+            continue
+        elif not df[COL_RIGHT_AUX].any():
+            logger.debug(
+                f"{COL_RIGHT_AUX} has no values and no rename provided. Dropping..."
+            )
+            df.drop(columns=[COL_RIGHT_AUX], inplace=True)
+            continue
+        raise Error(f"{COL_RIGHT_AUX} has values, must provide channel")
+
     return data, eeg_data
 
 
@@ -79,7 +94,7 @@ def merge_sources(data, reindex=None):
 
     merged = pd.concat(data, axis=1, join="outer")
     marker_cols = [
-        col for col in sorted(merged.columns) if col.startswith(MARKER_PREFIX)
+        col for col in sorted(merged.columns) if col.startswith(COL_MARKER_PREFIX)
     ]
     merged[marker_cols] = merged[marker_cols].fillna(0)
     merged = merged.apply(pd.Series.interpolate, args=("index",))
@@ -101,8 +116,8 @@ def merge_sources(data, reindex=None):
 
     logger.debug("Consolidating marker columns...")
     merged.drop(columns=marker_cols, inplace=True)
-    merged[MARKER_DEFAULT] = 0
-    merged.loc[markers, MARKER_DEFAULT] = 1
+    merged[COL_MARKER_DEFAULT] = 0
+    merged.loc[markers, COL_MARKER_DEFAULT] = 1
 
     return merged
 
@@ -161,7 +176,9 @@ def move_files(files, dest_dir):
         file.rename(dest_dir / file.name)
 
 
-def process_session_data(raw_files, output_dir, limit=None, test_split=0.2):
+def process_session_data(
+    raw_files, output_dir, limit=None, test_split=0.2, aux_channel=None
+):
     if not len(raw_files):
         return
 
@@ -180,7 +197,7 @@ def process_session_data(raw_files, output_dir, limit=None, test_split=0.2):
         logger.info(f"Processing session chunk {processed_chunks + 1}...")
         logger.debug(f"Session chunk name: {session}...")
         try:
-            data, eeg_data = load_session_data(files)
+            data, eeg_data = load_session_data(files, aux_channel=aux_channel)
             merged_df = merge_sources(data, reindex=eeg_data)
             session_epochs = get_session_epochs(merged_df, session.name)
             if len(session_epochs):

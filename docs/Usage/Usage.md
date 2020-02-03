@@ -74,6 +74,9 @@ Limit the number of processed session chunks
 **`-t, --test-split FLOAT`**  
 Percentage of data to reserve for testing. Default is 0.2
 
+**`-x, --aux-channel STRING`**
+Channel name for Right Aux. Must be provided if Right Aux has data, otherwise channel is dropped.
+
 ### Train
 Builds a model (currently only LSTM is supported) and saves the built model and diagram image in `MODEL_DIR`. If `epochs` is not 0, also trains the model on the data in `DATA_FILE` and saves the trained model and training history to `MODEL_DIR`. Even if `epochs` is not 0, `DATA_FILE` is required to determine the input size to the LSTM.
 

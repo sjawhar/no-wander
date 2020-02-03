@@ -1,7 +1,7 @@
 import h5py
 import logging
 import numpy as np
-from .constants import PACKAGE_NAME, SAMPLE_RATE
+from .constants import COL_MARKER_DEFAULT, PACKAGE_NAME, SAMPLE_RATE
 
 WINDOW_POST_RECOVERY = (0, SAMPLE_RATE * 3)
 WINDOW_PRE_RECOVERY = (SAMPLE_RATE * -7, SAMPLE_RATE * -1)
@@ -89,7 +89,7 @@ def save_epochs(filepath, epochs):
     logger.info(f"Saving epochs to {filepath}...")
     with h5py.File(filepath, "w") as hf:
         for epoch, recovery_ix, session in epochs:
-            data = epoch.drop(columns=[MARKER_DEFAULT])
+            data = epoch.drop(columns=[COL_MARKER_DEFAULT])
             dset_name = "-".join([str(int(ts)) for ts in data.index[[0, -1]]])
             date, chunk = session.split(".")[:2]
             logger.debug(f"Saving epoch {dset_name} from date {date} chunk {chunk}...")
