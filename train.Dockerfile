@@ -22,5 +22,7 @@ RUN DEV_PACKAGES=" \
 
 RUN groupadd --gid 1000 tf \
  && useradd --create-home --shell /bin/bash --uid 1000 --gid tf tf
+
 WORKDIR /home/tf
+COPY app/src ./no_wander
 USER tf
