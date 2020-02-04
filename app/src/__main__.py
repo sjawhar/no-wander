@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 from .cli import (
     process_run,
     process_setup_parser,
@@ -96,10 +97,14 @@ if __name__ == "__main__":
         ptvsd.wait_for_attach()
     del args.debug
 
-    command = args.command
-    handler = args.handler
-    del args.command
-    del args.handler
+    try:
+        command = args.command
+        handler = args.handler
+        del args.command
+        del args.handler
+    except:
+        parser.print_help()
+        sys.exit()
 
     logger.debug(f"{command} called with {args}")
     handler(args, **get_kwargs(remaining))

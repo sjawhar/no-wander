@@ -37,7 +37,7 @@ services:
     image: sjawhar/no-wander:train
     container_name: no-wander-train
     volumes:
-      - ./app/src:/home/tf/no_wander
+      - ./app/src:/opt/no_wander
       - ./data:/home/tf/data
       - ./models:/home/tf/models
     entrypoint: [python3, -m, no_wander, train]
@@ -49,7 +49,7 @@ services:
     image: sjawhar/no-wander:train
     container_name: no-wander-notebook
     volumes:
-      - ./app/src:/home/tf/no_wander
+      - ./app/src:/opt/no_wander
       - ./data:/home/tf/data
       - ./notebooks:/home/tf/notebooks
     ports:
