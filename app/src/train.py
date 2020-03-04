@@ -5,8 +5,9 @@ from keras.utils import plot_model
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from .datasets import read_dataset
+from .features import preprocess_data
 from .models import get_lstm_model
-from .constants import PACKAGE_NAME
+from .constants import PACKAGE_NAME, PREPROCESS_NONE
 
 LEARNING_RATE = 0.1
 BETA_ONE = 0.9
@@ -15,21 +16,6 @@ DECAY = 0.01
 RANDOM_SEED = 42
 
 logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
-
-
-def get_samples(data_file, sample_size, extract_features):
-    samples, labels, features = read_dataset(data_file, sample_size)
-
-    logger.info(f"{len(samples)} samples in training set")
-    logger.info(f"All seen features: {', '.join(features)}")
-
-    if extract_features:
-        from .features import extract_eeg_features
-
-        samples, features = extract_eeg_features(samples, features)
-        logger.info(f"Extracted features: {', '.join(features)}")
-
-    return samples, labels, features
 
 
 def get_sequences(samples, labels, input_shape, shuffle_samples):
@@ -113,15 +99,17 @@ def build_and_train_model(
     conv1d_params=None,
     dense_params={},
     # Data prep params
-    extract_features=False,
+    preprocess=PREPROCESS_NONE,
     shuffle_samples=False,
     **train_args,
 ):
-    samples, labels, features = get_samples(data_file, sample_size, extract_features)
-    input_shape = (
-        sequence_size,
-        len(features) * (1 if extract_features else sample_size),
-    )
+    samples, labels, features_raw = read_dataset(data_file, sample_size)
+    logger.info(f"{len(samples)} samples in training set")
+    logger.info(f"Raw features: {', '.join(features_raw)}")
+
+    samples, sample_dims, features = preprocess_data(samples, features_raw, preprocess)
+    input_shape = (sequence_size, sample_dims)
+    logger.info(f"Preprocessed features: {', '.join(features)}")
 
     model_dir = Path(model_dir).resolve()
     if not model_dir.exists():

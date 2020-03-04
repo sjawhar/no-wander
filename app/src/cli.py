@@ -7,6 +7,9 @@ from .constants import (
     DIR_INPUT,
     DIR_TEST,
     PACKAGE_NAME,
+    PREPROCESS_EXTRACT_EEG,
+    PREPROCESS_NONE,
+    PREPROCESS_NORMALIZE,
     SOURCE_ACC,
     SOURCE_EEG,
     SOURCE_GYRO,
@@ -197,12 +200,12 @@ def train_setup_parser(parser):
         help="JSON object of parameters to pass to Dense(). ic_params controls IC layer after activation.",
     )
     parser.add_argument(
-        "-f",
-        "--extract-features",
-        action="store_const",
-        const=True,
-        default=False,
-        help="Use feature extractor instead of raw EEG",
+        "-p",
+        "--preprocess",
+        action="store",
+        default=PREPROCESS_NONE,
+        choices=[PREPROCESS_EXTRACT_EEG, PREPROCESS_NONE, PREPROCESS_NORMALIZE],
+        help="Type of preprocessing to perform on input data",
     )
     parser.add_argument(
         "--learning-rate", type=float, help="learning_rate parameter for optimizer"

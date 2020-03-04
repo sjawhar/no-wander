@@ -1,10 +1,10 @@
-import bct
 import numpy as np
-import pandas as pd
-from mne.time_frequency import psd_array_multitaper
-from pywt import wavedec
-from scipy import stats
-from .constants import SAMPLE_RATE
+from .constants import (
+    PREPROCESS_EXTRACT_EEG,
+    PREPROCESS_NONE,
+    PREPROCESS_NORMALIZE,
+    SAMPLE_RATE,
+)
 
 
 def get_eeg_data(X_raw, features):
@@ -26,6 +26,8 @@ def get_zero_crossings(data):
 
 
 def extract_time_features(X):
+    from scipy import stats
+
     enrichers = [
         ("mean", np.mean, {}),
         ("var", np.var, {}),
@@ -52,6 +54,9 @@ def extract_time_features(X):
 
 
 def extract_frequency_features(X):
+    from mne.time_frequency import psd_array_multitaper
+    from pywt import wavedec
+
     psds, freqs = psd_array_multitaper(X, SAMPLE_RATE, fmax=110)
     bands = [
         ["delta", 0],
@@ -91,6 +96,8 @@ def extract_frequency_features(X):
 
 
 def extract_epoch_graph_features(W):
+    import bct
+
     L = bct.weight_conversion(W, "lengths")
     L[W == 0] = np.inf
     D, _ = bct.distance_wei(L)
@@ -187,4 +194,24 @@ def extract_eeg_features(X_raw, features):
     features = [f"{channel}_{enrich}" for enrich in features for channel in channels]
     features += features_corr
 
-    return X_enriched, features
+    return X_enriched, 1, features
+
+
+def normalize_data(X_raw):
+    from sklearn.preprocessing import RobustScaler
+
+    return (
+        RobustScaler()
+        .fit_transform(X_raw.reshape(-1, X_raw.shape[-1]))
+        .reshape(X_raw.shape)
+    )
+
+
+def preprocess_data(X_raw, features, preprocess):
+    if preprocess == PREPROCESS_EXTRACT_EEG:
+        return extract_eeg_features(X_raw, features)
+    elif preprocess == PREPROCESS_NONE:
+        return X_raw, len(features), features
+    elif preprocess == PREPROCESS_NORMALIZE:
+        return normalize_data(X_raw), len(features), features
+    raise ValueError(f"Unknown preprocessing type {preprocess}")

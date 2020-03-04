@@ -107,8 +107,8 @@ JSON object of parameters to pass to Conv1D(). Default is to not use a conv laye
 **`-d, --dense JSON`**  
 JSON object of parameters to pass to Dense(). Default is a 32-unit dense layer. `ic_params` controls IC layer after activation.
 
-**`-f, --extract-features`**  
-Use feature extractor instead of raw EEG. Default is false
+**`-p, --preprocess`**  
+Type of preprocessing to perform on input data. Valid options are "extract-eeg", "normalize", and "none". Default is "none".
 
 **`--learning-rate FLOAT`**  
 `learning_rate` parameter for optimizer. Default is 0.1
