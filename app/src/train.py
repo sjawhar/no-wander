@@ -24,7 +24,7 @@ def get_samples(data_file, sample_size, extract_features):
     logger.info(f"All seen features: {', '.join(features)}")
 
     if extract_features:
-        from .extract import extract_eeg_features
+        from .features import extract_eeg_features
 
         samples, features = extract_eeg_features(samples, features)
         logger.info(f"Extracted features: {', '.join(features)}")

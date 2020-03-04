@@ -1,0 +1,21 @@
+name: lstm-2l-64-32-features
+projectId: prmqc6jjx
+machineType: GPU+
+container: sjawhar/no-wander:train
+containerUser: tf
+workingDirectory: /home/tf
+command: |
+  python3 -m no_wander train \
+    --lstm '[
+      {"units": 64, "ic_params": { "dropout": 0.2, "batchnorm": true } },
+      {"units": 32, "ic_params": { "dropout": 0.2, "batchnorm": true } }
+    ]' \
+    --sample-size 256 \
+    --sequence-size 10 \
+    --epochs 1000 \
+    --extract-features \
+    --shuffle-samples \
+    --test-split 0.25 \
+    /storage/no-wander/data/1572178629-1579608303-train.h5 \
+    /artifacts
+modelType: Tensorflow

@@ -1,0 +1,27 @@
+version: 2
+workflows:
+  lstm-1l-32:
+    steps:
+      - name: lstm-1l-32
+        command: experiment.run_single_node
+        paramsFile: .ps_project/lstm-1l-32.yaml
+  lstm-1l-64:
+    steps:
+      - name: lstm-1l-64
+        command: experiment.run_single_node
+        paramsFile: .ps_project/lstm-1l-64.yaml
+  lstm-2l-32-64:
+    steps:
+      - name: lstm-2l-32-64
+        command: experiment.run_single_node
+        paramsFile: .ps_project/lstm-2l-32-64.yaml
+  lstm-2l-32-64-features:
+    steps:
+      - name: lstm-2l-32-64-features
+        command: experiment.run_single_node
+        paramsFile: .ps_project/lstm-2l-32-64-features.yaml
+  lstm-2l-128-128-features:
+    steps:
+      - name: lstm-2l-128-128-features
+        command: experiment.run_single_node
+        paramsFile: .ps_project/lstm-2l-128-128-features.yaml
