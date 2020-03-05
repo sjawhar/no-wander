@@ -1,12 +1,10 @@
 import logging
 import numpy as np
-from keras.optimizers import Adam
-from keras.utils import plot_model
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from .datasets import read_dataset
 from .features import preprocess_data
-from .models import get_lstm_model
+from .models import compile_model, get_lstm_model
 from .constants import PACKAGE_NAME, PREPROCESS_NONE
 
 LEARNING_RATE = 0.1
@@ -52,7 +50,7 @@ def train_model(
     beta_one=BETA_ONE,
     beta_two=BETA_TWO,
     decay=DECAY,
-    **kwargs,
+    **fit_kwargs,
 ):
     validation_data = None
     if test_split:
@@ -62,9 +60,8 @@ def train_model(
         )
         validation_data = (X_test, Y_test)
 
-    opt = Adam(learning_rate, beta_one, beta_two, decay)
-    model.compile(opt, loss="binary_crossentropy", metrics=["accuracy"])
-    return model.fit(X, Y, validation_data=validation_data, **kwargs)
+    compile_model(model, learning_rate, beta_one, beta_two, decay)
+    return model.fit(X, Y, validation_data=validation_data, **fit_kwargs)
 
 
 def plot_training_history(history, model_dir):
@@ -101,7 +98,7 @@ def build_and_train_model(
     # Data prep params
     preprocess=PREPROCESS_NONE,
     shuffle_samples=False,
-    **train_args,
+    **train_kwargs,
 ):
     samples, labels, features_raw = read_dataset(data_file, sample_size)
     logger.info(f"{len(samples)} samples in training set")
@@ -121,16 +118,14 @@ def build_and_train_model(
         lstm_layers,
         conv1d_params=conv1d_params,
         dense_params=dense_params,
+        plot_model_file=model_dir / "model.png",
     )
     model.summary()
-    plot_model(
-        model, to_file=model_dir / "model.png", show_shapes=True, show_layer_names=True
-    )
 
-    if train_args.get("epochs"):
+    if train_kwargs.get("epochs"):
         X, Y = get_sequences(samples, labels, input_shape, shuffle_samples)
 
-        history = train_model(model, X, Y, **train_args)
+        history = train_model(model, X, Y, **train_kwargs)
         plot_training_history(history, model_dir)
 
     model_path = model_dir / "model.h5"
