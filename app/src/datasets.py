@@ -1,12 +1,12 @@
 import h5py
 import logging
 import numpy as np
-from .constants import COL_MARKER_DEFAULT, PACKAGE_NAME, SAMPLE_RATE
+from .constants import COL_MARKER_DEFAULT, SAMPLE_RATE
 
 WINDOW_POST_RECOVERY = (0, SAMPLE_RATE * 3)
 WINDOW_PRE_RECOVERY = (SAMPLE_RATE * -7, SAMPLE_RATE * -1)
 
-logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
+logger = logging.getLogger(__name__)
 
 
 def parse_dataset(filepath):

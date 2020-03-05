@@ -6,7 +6,6 @@ from .constants import (
     DIR_DATA_DEFAULT,
     DIR_INPUT,
     DIR_TEST,
-    PACKAGE_NAME,
     PREPROCESS_EXTRACT_EEG,
     PREPROCESS_NONE,
     PREPROCESS_NORMALIZE,
@@ -17,7 +16,7 @@ from .constants import (
 )
 
 
-logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
+logger = logging.getLogger(__name__)
 
 
 def type_json(json_str):

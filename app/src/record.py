@@ -8,14 +8,13 @@ from .constants import (
     EVENT_SESSION_END,
     EVENT_STREAMING_ERROR,
     EVENT_STREAMING_RESTARTED,
-    PACKAGE_NAME,
 )
 
 
 CHUNK_DURATION_MAX = 300
 CHUNK_DURATION_MIN = 10
 
-logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
+logger = logging.getLogger(__name__)
 
 
 def record_signals(duration, sources, filepath, conn):

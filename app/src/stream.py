@@ -6,7 +6,6 @@ from muselsl.viewer_v2 import Canvas as MuseCanvas
 from pylsl import resolve_byprop, StreamInlet
 from vispy import app
 from .constants import (
-    PACKAGE_NAME,
     SOURCE_ACC,
     SOURCE_EEG,
     SOURCE_GYRO,
@@ -17,7 +16,7 @@ ATTEMPTS_MAX = 5
 SIGNAL_QUALITY_THRESHOLD = 10
 SIGNAL_STABILITY_COUNT = 100
 
-logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
+logger = logging.getLogger(__name__)
 stream_data = {
     "args": [],
     "process": None,

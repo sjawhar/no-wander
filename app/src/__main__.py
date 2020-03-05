@@ -9,10 +9,9 @@ from .cli import (
     train_run,
     train_setup_parser,
 )
-from .constants import PACKAGE_NAME
 
 
-logger = logging.getLogger(PACKAGE_NAME)
+logger = logging.getLogger(__package__)
 logging.basicConfig(level=logging.WARNING)
 
 

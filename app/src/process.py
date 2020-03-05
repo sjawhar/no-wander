@@ -10,7 +10,6 @@ from .constants import (
     DIR_EPOCHS,
     DIR_FAILED,
     DIR_PROCESSED,
-    PACKAGE_NAME,
     SAMPLE_RATE,
     SOURCE_EEG,
 )
@@ -22,7 +21,7 @@ EVENT_RECOVERY = "Recovery"
 WINDOW_POST_RECOVERY = "WINDOW_POST_RECOVERY"
 WINDOW_PRE_RECOVERY = "WINDOW_PRE_RECOVERY"
 
-logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
+logger = logging.getLogger(__name__)
 
 # TODO: Get subject from session path
 def get_files_by_session(data_dir):

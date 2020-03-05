@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from .datasets import read_dataset
 from .features import preprocess_data
 from .models import compile_model, get_lstm_model
-from .constants import PACKAGE_NAME, PREPROCESS_NONE
+from .constants import PREPROCESS_NONE
 
 LEARNING_RATE = 0.1
 BETA_ONE = 0.9
@@ -13,7 +13,7 @@ BETA_TWO = 0.999
 DECAY = 0.01
 RANDOM_SEED = 42
 
-logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
+logger = logging.getLogger(__name__)
 
 
 def get_sequences(samples, labels, input_shape, shuffle_samples):

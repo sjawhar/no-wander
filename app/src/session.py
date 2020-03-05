@@ -13,7 +13,6 @@ from .constants import (
     EVENT_STREAMING_RESTARTED,
     MARKER_RECOVER,
     MARKER_SYNC,
-    PACKAGE_NAME,
 )
 
 
@@ -21,7 +20,7 @@ KEYS_QUIT = ["esc", "q"]
 KEYS_RECOVERY = ["up", "down", "left", "right", "space"]
 SOUND_BELL = (Path(__file__).parent / "assets" / "bell.wav").resolve()
 
-logger = logging.getLogger(PACKAGE_NAME + "." + __name__)
+logger = logging.getLogger(__name__)
 
 
 def get_duration(duration=None):
