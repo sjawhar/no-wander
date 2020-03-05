@@ -6,12 +6,10 @@ containerUser: tf
 workingDirectory: /home/tf
 command: |
   python3 -m no_wander train \
-    --lstm '[
-      {"units": 64, "ic_params": { "dropout": 0.2, "batchnorm": true } }
-    ]' \
+    --lstm '{"units": 64, "ic_params": { "dropout": 0.2, "batchnorm": true } }' \
     --sample-size 128 \
     --sequence-size 6 \
-    --epochs 1000 \
+    --epochs 100 \
     --preprocess normalize \
     --test-split 0.25 \
     /storage/no-wander/data/1572178629-1579608303-train.h5 \
