@@ -198,13 +198,9 @@ def extract_eeg_features(X_raw, features):
 
 
 def normalize_data(X_raw):
-    from sklearn.preprocessing import RobustScaler
+    from sklearn.preprocessing import robust_scale
 
-    return (
-        RobustScaler()
-        .fit_transform(X_raw.reshape(-1, X_raw.shape[-1]))
-        .reshape(X_raw.shape)
-    )
+    return robust_scale(X_raw.reshape(-1, X_raw.shape[-1])).reshape(X_raw.shape)
 
 
 def preprocess_data(X_raw, features, preprocess):

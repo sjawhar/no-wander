@@ -23,41 +23,16 @@ The benefits of the CNN are to reduce the dimensionality of the input to the LST
 
 ### LSTM with Engineered Features
 
-Tsiouris et al. showed that model performance can improve dramatically when trained on featurized data over raw data alone. We ahve replicated their LSTM network and feature extraction. We extend this approach by attempting to identify which specific features most improved model performance, an analysis which was missing from the work by Tsiouris et al..
+Tsiouris et al. showed that model performance can improve dramatically when trained on featurized data over raw data alone. We have replicated their LSTM network and feature extraction pipeline (see [Featurization](Featurization) for more details). We extend this approach by attempting to identify which specific features most improved model performance, an analysis which was missing from the work by Tsiouris et al..
 
-For this model, we use a 1-second sample size. This larger size was chosen so that frequency domain features can capture. The below features are then extracted from each sample and used as the input to the LSTM. In other words, the LSTM does not receive any raw EEG data as direct input. We then shuffle the samples and construct 10-sample sequences as input to the LSTM. As in the original work, the LSTM has two layers of 128 units each. These are followed by a 30-unit fully-connected layer using ReLU activation, and finally a single-unit output layer using sigmoid activation. Also as in the original work, dropout and batch normalization are not used anywhere in the network.
-
-| Feature Type     | Feature                                       | Count                                | Notes                                                       |
-| ---------------- | --------------------------------------------- | ------------------------------------ | ----------------------------------------------------------- |
-| Time domain      | Mean                                          | 1 per channel                        |                                                             |
-| Time domain      | Variance                                      | 1 per channel                        |                                                             |
-| Time domain      | Standard Deviation                            | 1 per channel                        |                                                             |
-| Time domain      | Skew                                          | 1 per channel                        |                                                             |
-| Time domain      | Kurtosis                                      | 1 per channel                        |                                                             |
-| Time domain      | Number of zero-crossings                      | 1 per channel                        |                                                             |
-| Time domain      | Difference between maximum and minimum values | 1 per channel                        |                                                             |
-| Time domain      | Absolute area under curve                     | 1 per channel                        |                                                             |
-| Frequency domain | Total power                                   | 1 per channel                        |                                                             |
-| Frequency domain | % power in Delta band                         | 1 per channel                        | 0Hz ≤ f < 4Hz                                               |
-| Frequency domain | % power in Theta band                         | 1 per channel                        | 4Hz ≤ f < 8Hz                                               |
-| Frequency domain | % power in Alpha band                         | 1 per channel                        | 8Hz ≤ f < 14Hz                                              |
-| Frequency domain | % power in Beta band                          | 1 per channel                        | 14Hz ≤ f < 30Hz                                             |
-| Frequency domain | % power in Gamma1 band                        | 1 per channel                        | 30Hz ≤ f < 65Hz                                             |
-| Frequency domain | % power in Gamma2 band                        | 1 per channel                        | 65Hz ≤ f < 110Hz                                            |
-| Frequency domain | Discrete wavelet transform coefficients       | 16 per channel (8 approx + 8 detail) | 7-level decomposition, Daubechies 4 mother wavelet          |
-| Correlation      | Maximum time-lagged pairwise correlation      | Number of channel pairs              |                                                             |
-| Correlation      | Decorrelation time                            | 1 per channel                        | Time to first zero-crossing in autocorrelation function     |
-| Graph theory     | Node clustering coefficient                   | 1 per channel                        | Nodes are channels, weights are max time-lagged correlation |
-| Graph theory     | Node efficiency                               | 1 per channel                        | See above                                                   |
-| Graph theory     | Node betweenness centrality                   | 1 per channel                        | See above                                                   |
-| Graph theory     | Node eccentricity                             | 1 per channel                        | See above                                                   |
-| Graph theory     | Graph lambda                                  | 1                                    | See above                                                   |
-| Graph theory     | Graph efficiency                              | 1                                    | See above                                                   |
-| Graph theory     | Graph radius                                  | 1                                    | See above                                                   |
-| Graph theory     | Graph diameter                                | 1                                    | See above                                                   |
+For this model, we use a 1-second sample size. This larger size was chosen so that frequency domain features can be captured. The features are then extracted from each sample and used as the input to the LSTM. In other words, the LSTM does not receive any raw EEG data as direct input. We then shuffle the samples and construct 10-sample sequences as input to the LSTM. As in the original work, the LSTM has two layers of 128 units each. These are followed by a 30-unit fully-connected layer using ReLU activation, and finally a single-unit output layer using sigmoid activation. Also as in the original work, dropout and batch normalization are not used anywhere in the network.
 
 [[resources/model_lstm_feature.png]]
+
+## Hyperparameter Search
+The performance of LSTM networks is notoriously sensitive to the choice of hyperparameters (e.g. number of layers, number of units, even batch size). Zhang et al. (2017)<sup>[[3](https://link.springer.com/chapter/10.1007/978-3-319-70096-0_76)]</sup> leveraged a software testing technique called orthogonal array (OA) testing to design a 7-layer RNN classifier for EEG input, with promising results. We will also explore this technique in testing our own models.
 
 ## References
 1. [Tsiouris, Κ. Μ., Pezoulas, V. C., Zervakis, M., Konitsiotis, S., Koutsouris, D. D., & Fotiadis, D. I. (2018). A Long Short-Term Memory deep learning network for the prediction of epileptic seizures using EEG signals. *Computers in Biology and Medicine*, 99, 24–37. doi: 10.1016/j.compbiomed.2018.05.019](https://www.sciencedirect.com/science/article/pii/S001048251830132X#cebib0010)
 2. [Chen, G., Chen, P., Shi, Y., Hsieh, C. Y., Liao, B., & Zhang, S. (2019). Rethinking the Usage of Batch Normalization and Dropout in the Training of Deep Neural Networks. *arXiv preprint arXiv:1905.05928*.](https://arxiv.org/abs/1905.05928)
+3. [Zhang, X., Yao, L., Huang, C., Sheng, Q. Z., & Wang, X. (2017, November). Intent recognition in smart living through deep recurrent neural networks. In *International Conference on Neural Information Processing* (pp. 748-758). Springer, Cham.](https://link.springer.com/chapter/10.1007/978-3-319-70096-0_76)

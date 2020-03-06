@@ -1,5 +1,5 @@
 [**< Back**](Model-Design)  
-[Featurization](Featurization)  
-**LSTM**  
+**Featurization**  
 {{SIDEBAR_POPULATE}}  
+[LSTM](LSTM)  
 [Reinforced Attention](Reinforced-Attention)  

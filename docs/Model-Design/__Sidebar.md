@@ -3,7 +3,9 @@
 [Model Design](Model-Design)  
 {{SIDEBAR_POPULATE}}  
 &nbsp;&nbsp;**> - - - - - - - - - - <**  
+&nbsp;&nbsp;[Featurization](Featurization)  
 &nbsp;&nbsp;[LSTM](LSTM)  
+&nbsp;&nbsp;[Reinforced Attention](Reinforced-Attention)  
 &nbsp;&nbsp;**> - - - - - - - - - - <**  
 [Usage](Usage)  
 [FAQ](FAQ)  
