@@ -194,7 +194,7 @@ def extract_eeg_features(X_raw, features):
     features = [f"{channel}_{enrich}" for enrich in features for channel in channels]
     features += features_corr
 
-    return X_enriched, 1, features
+    return X_enriched, features
 
 
 def normalize_data(X_raw):
@@ -209,9 +209,9 @@ def normalize_data(X_raw):
 
 def preprocess_data(X_raw, features, preprocess):
     if preprocess == PREPROCESS_EXTRACT_EEG:
-        return extract_eeg_features(X_raw, features)
+        return (*extract_eeg_features(X_raw, features), True)
     elif preprocess == PREPROCESS_NONE:
-        return X_raw, len(features), features
+        return X_raw, features, False
     elif preprocess == PREPROCESS_NORMALIZE:
-        return normalize_data(X_raw), len(features), features
+        return normalize_data(X_raw), features, False
     raise ValueError(f"Unknown preprocessing type {preprocess}")

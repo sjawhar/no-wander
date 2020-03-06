@@ -45,24 +45,32 @@ def get_window_samples(data, window, sample_size):
     return samples
 
 
-def get_samples(data, sample_size):
+def get_samples(data, sample_size, include_partial_window):
     parsed = [None] * len(data)
     num_samples = 0
 
     for i in range(len(data)):
         dset, recovery_ix, features = data[i]
-        pre = get_window_samples(dset[:recovery_ix], WINDOW_PRE_RECOVERY, sample_size)
-        post = get_window_samples(dset[recovery_ix:], WINDOW_POST_RECOVERY, sample_size)
-        num_samples += len(pre) + len(post)
-        parsed[i] = pre, post, features
+        parsed[i] = [[], [], features]
+        for j, window_data, window, window_name in [
+            (0, dset[:recovery_ix], WINDOW_PRE_RECOVERY, "pre"),
+            (1, dset[recovery_ix:], WINDOW_POST_RECOVERY, "post"),
+        ]:
+            data_size = len(window_data)
+            full_window_size = max(abs(p) for p in window)
+            if not include_partial_window and data_size < full_window_size:
+                logger.debug(f"Short {window_name} window of size {data_size} dropped")
+                continue
+            window_samples = get_window_samples(window_data, window, sample_size)
+            parsed[i][j] = window_samples
+            num_samples += len(window_samples)
 
     return parsed, num_samples
 
 
 def samples_to_tensors(samples, data_shape):
-    num_samples, sample_size, num_features = data_shape
-    X = np.full((num_samples, sample_size, num_features), np.nan)
-    Y = np.zeros((num_samples, 1))
+    X = np.full(data_shape, np.nan)
+    Y = np.zeros((X.shape[0], 1))
 
     i = 0
     for pre, post, features in samples:
@@ -77,11 +85,12 @@ def samples_to_tensors(samples, data_shape):
     return X, Y
 
 
-def read_dataset(filepath, sample_size):
+def read_dataset(filepath, sample_size, include_partial_window=False):
     logger.info(f"Reading datasets from {filepath}...")
     data, features = parse_dataset(filepath)
-    samples, num_samples = get_samples(data, sample_size)
+    samples, num_samples = get_samples(data, sample_size, include_partial_window)
     X, Y = samples_to_tensors(samples, (num_samples, sample_size, len(features)))
+    logger.debug(f"Data shape {X.shape}")
     return X, Y, features
 
 

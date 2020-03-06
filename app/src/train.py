@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 def get_sequences(samples, labels, input_shape, shuffle_samples):
-    logger.info(f"Forming sequences of length {input_shape[0]}...")
+    sequence_size = input_shape[0]
+    logger.info(f"Forming sequences of length {sequence_size}...")
     if shuffle_samples:
         logger.debug("Shuffling samples...")
         np.random.seed(RANDOM_SEED)
@@ -26,11 +27,22 @@ def get_sequences(samples, labels, input_shape, shuffle_samples):
         labels = labels[shuffle]
 
     X = []
-    for label in [0, 1]:
+    for label, label_name in [(0, "miss"), (1, "hit")]:
         X_label = samples[(labels == label).flatten()]
-        rem = X_label.shape[0] % input_shape[0]
+        num_samples = X_label.shape[0]
+        rem = num_samples % sequence_size
         if rem > 0:
-            X_label = X_label[:-rem]
+            if shuffle_samples:
+                pad = np.random.choice(
+                    num_samples, size=(sequence_size - rem), replace=False
+                )
+                X_label = np.concatenate([X_label, X_label[pad]], axis=0)
+                logger.debug(
+                    f"Padded {label_name} with {len(pad)} samples for even sequences"
+                )
+            else:
+                X_label = X_label[:-rem]
+                logger.debug(f"Dropped {rem} {label_name} samples for even sequences")
         X.append(X_label.reshape((-1, *input_shape)))
 
     miss_size = X[0].shape[0]
@@ -38,6 +50,7 @@ def get_sequences(samples, labels, input_shape, shuffle_samples):
     Y = np.ones((X.shape[0], 1))
     Y[:miss_size] = 0
     logger.info(f"Formed {Y.size} sequences! {miss_size} miss / {int(Y.sum())} hit")
+    logger.debug(f"Sequences shape: {X.shape}")
     return np.nan_to_num(X, 0), Y
 
 
@@ -100,13 +113,16 @@ def build_and_train_model(
     shuffle_samples=False,
     **train_kwargs,
 ):
-    samples, labels, features_raw = read_dataset(data_file, sample_size)
+    samples, labels, features_raw = read_dataset(
+        data_file, sample_size, include_partial_window=shuffle_samples
+    )
     logger.info(f"{len(samples)} samples in training set")
     logger.info(f"Raw features: {', '.join(features_raw)}")
 
-    samples, sample_dims, features = preprocess_data(samples, features_raw, preprocess)
-    input_shape = (sequence_size, sample_dims)
+    samples, features, is_flattened = preprocess_data(samples, features_raw, preprocess)
+    input_shape = (sequence_size, len(features) * (1 if is_flattened else sample_size))
     logger.info(f"Preprocessed features: {', '.join(features)}")
+    logger.info(f"Input shape: {input_shape}")
 
     model_dir = Path(model_dir).resolve()
     if not model_dir.exists():
