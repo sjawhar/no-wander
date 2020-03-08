@@ -141,7 +141,11 @@ def build_and_train_model(
     if train_kwargs.get("epochs"):
         X, Y = get_sequences(samples, labels, input_shape, shuffle_samples)
 
-        history = train_model(model, X, Y, **train_kwargs)
+        try:
+            history = train_model(model, X, Y, **train_kwargs)
+        except KeyboardInterrupt:
+            logger.info("\nTraining interrupted!")
+            history = model.history
         plot_training_history(history, model_dir)
 
     model_path = model_dir / "model.h5"

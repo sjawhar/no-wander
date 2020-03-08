@@ -51,6 +51,7 @@ services:
     volumes:
       - ./app/src:/opt/no_wander
       - ./data:/home/tf/data
+      - ./models:/home/tf/models
       - ./notebooks:/home/tf/notebooks
     ports:
       - 8888:8888
