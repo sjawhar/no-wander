@@ -181,14 +181,14 @@ def train_setup_parser(parser):
         dest="lstm_layers",
         type=type_json,
         required=True,
-        help="JSON array of LSTM parameters to pass to LSTM(). ic_params controls IC layer after activation.",
+        help="JSON array of parameters to pass to LSTM(). ic_params controls IC layer after activation.",
     )
     parser.add_argument(
         "-c",
         "--conv1d",
-        dest="conv1d_params",
+        dest="conv1d_layers",
         type=type_json,
-        help="JSON object of parameters to pass to Conv1D(). ic_params controls IC layer after activation.",
+        help="JSON array of parameters to pass to Conv1D(). ic_params controls IC layer after activation.",
     )
     parser.add_argument(
         "-d",

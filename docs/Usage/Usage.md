@@ -98,11 +98,11 @@ Number of readings/timesteps per sample
 Number of samples per LSTM sequence
 
 **`-l, --lstm JSON`**  
-JSON array of LSTM parameters to pass to LSTM(). `ic_params` controls IC layer after activation.
+JSON array of parameters to pass to LSTM(). `ic_params` controls IC layer after activation.
 
 #### Optional Arguments
 **`-c, --conv1d JSON`**  
-JSON object of parameters to pass to Conv1D(). Default is to not use a conv layer. `ic_params` controls IC layer after activation.
+JSON array of parameters to pass to Conv1D(). Default is to not use a conv layer. `ic_params` controls IC layer after activation.
 
 **`-d, --dense JSON`**  
 JSON object of parameters to pass to Dense(). Default is a 32-unit dense layer. `ic_params` controls IC layer after activation.

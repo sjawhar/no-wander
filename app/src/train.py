@@ -106,7 +106,7 @@ def build_and_train_model(
     sample_size,
     sequence_size,
     lstm_layers,
-    conv1d_params=None,
+    conv1d_layers=[],
     dense_params={},
     # Data prep params
     preprocess=PREPROCESS_NONE,
@@ -132,7 +132,7 @@ def build_and_train_model(
     model = get_lstm_model(
         input_shape,
         lstm_layers,
-        conv1d_params=conv1d_params,
+        conv1d_layers=conv1d_layers,
         dense_params=dense_params,
         plot_model_file=model_dir / "model.png",
     )
