@@ -102,7 +102,7 @@ JSON array of parameters to pass to LSTM(). `ic_params` controls IC layer after 
 
 #### Optional Arguments
 **`-c, --conv1d JSON`**  
-JSON array of parameters to pass to Conv1D(). Default is to not use a conv layer. `ic_params` controls IC layer after activation.
+JSON array of parameters to pass to Conv1D(). Default is to not use a conv layer. `ic_params` controls IC layer after activation. Include a `pool` attribute of kwargs to add a MaxPooling1D layer after IC layer.
 
 **`-d, --dense JSON`**  
 JSON object of parameters to pass to Dense(). Default is a 32-unit dense layer. `ic_params` controls IC layer after activation.

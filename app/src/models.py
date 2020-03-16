@@ -1,11 +1,12 @@
 import logging
 from keras.layers import (
-    Dense,
     Activation,
-    Dropout,
-    LSTM,
     BatchNormalization,
     Conv1D,
+    Dense,
+    Dropout,
+    LSTM,
+    MaxPooling1D,
 )
 from keras.models import Sequential
 from keras.optimizers import Adam
@@ -33,6 +34,13 @@ def add_layer(model, layer, name, ic_params={}, **kwargs):
     model.add(layer(name=name, **kwargs))
     if type(ic_params) is not dict:
         return
+    add_ic_layer(model, name, **ic_params)
+
+
+def add_conv1d_layer(model, name, ic_params={}, pool=None, **kwargs):
+    add_layer(model, Conv1D, name, ic_params=None, **kwargs)
+    if pool is not None:
+        add_layer(model, MaxPooling1D, f"{name}_pool", ic_params=None, **pool)
     add_ic_layer(model, name, **ic_params)
 
 
@@ -81,7 +89,7 @@ def get_lstm_model(
             conv1d_params[PARAM_INPUT_SHAPE] = input_shape
             is_input_layer = False
         conv1d_params[PARAM_ACTIVATION] = conv1d_params.get(PARAM_ACTIVATION, "relu")
-        add_layer(model, Conv1D, name, **conv1d_params)
+        add_conv1d_layer(model, name, **conv1d_params)
 
     num_lstm_layers = len(lstm_layers)
     for i in range(num_lstm_layers):
