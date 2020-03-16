@@ -108,6 +108,7 @@ def build_and_train_model(
     lstm_layers,
     conv1d_layers=[],
     dense_params={},
+    dropout=0,
     # Data prep params
     preprocess=PREPROCESS_NONE,
     shuffle_samples=False,
@@ -134,6 +135,7 @@ def build_and_train_model(
         lstm_layers,
         conv1d_layers=conv1d_layers,
         dense_params=dense_params,
+        dropout=dropout,
         plot_model_file=model_dir / "model.png",
     )
     model.summary()

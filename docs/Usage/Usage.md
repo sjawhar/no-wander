@@ -110,6 +110,9 @@ JSON object of parameters to pass to Dense(). Default is a 32-unit dense layer. 
 **`-p, --preprocess`**  
 Type of preprocessing to perform on input data. Valid options are "extract-eeg", "normalize", and "none". Default is "none".
 
+**`--dropout`**  
+Dropout rate for input. Default is 0
+
 **`--learning-rate FLOAT`**  
 `learning_rate` parameter for optimizer. Default is 0.1
 

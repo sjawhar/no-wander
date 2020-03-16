@@ -44,13 +44,36 @@ def compile_model(
 
 
 def get_lstm_model(
-    input_shape, lstm_layers, conv1d_layers=[], dense_params={}, plot_model_file=None,
+    input_shape,
+    lstm_layers,
+    conv1d_layers=[],
+    dense_params={},
+    dropout=0,
+    plot_model_file=None,
 ):
     model = Sequential()
     is_input_layer = True
 
     if type(conv1d_layers) is not list:
         conv1d_layers = [conv1d_layers]
+    if type(lstm_layers) is not list:
+        lstm_layers = [lstm_layers]
+
+    if dropout > 0:
+        noise_shape = [None, *input_shape]
+        if len(conv1d_layers):
+            noise_shape[1] = 1
+        add_layer(
+            model,
+            Dropout,
+            "input_dropout",
+            ic_params=None,
+            input_shape=input_shape,
+            noise_shape=noise_shape,
+            rate=dropout,
+        )
+        is_input_layer = False
+
     for i in range(len(conv1d_layers)):
         name = f"conv1d_{i + 1}"
         conv1d_params = conv1d_layers[i]
@@ -60,8 +83,6 @@ def get_lstm_model(
         conv1d_params[PARAM_ACTIVATION] = conv1d_params.get(PARAM_ACTIVATION, "relu")
         add_layer(model, Conv1D, name, **conv1d_params)
 
-    if type(lstm_layers) is not list:
-        lstm_layers = [lstm_layers]
     num_lstm_layers = len(lstm_layers)
     for i in range(num_lstm_layers):
         name = f"lstm_{i + 1}"
