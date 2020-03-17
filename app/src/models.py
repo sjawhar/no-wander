@@ -28,11 +28,13 @@ class GradientMetricsCallback(Callback):
         if not hasattr(self, "is_chart_created"):
             self.is_chart_created = {}
 
+        print("")
         for metric, value in logs.items():
             if metric not in self.is_chart_created:
                 print(json.dumps({"chart": metric, "axis": "epoch"}))
                 self.is_chart_created[metric] = True
             print(json.dumps({"chart": metric, "x": epoch, "y": float(value)}))
+        print("")
 
 
 def add_ic_layer(model, name, dropout=0.2, batchnorm=True):
@@ -88,7 +90,6 @@ def fit_model(
         )
     if gradient_metrics:
         callbacks.append(GradientMetricsCallback())
-        kwargs[PARAM_VERBOSE] = 0
     return model.fit(X, Y, callbacks=callbacks, **kwargs)
 
 

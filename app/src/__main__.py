@@ -92,7 +92,9 @@ if __name__ == "__main__":
     if args.debug:
         import ptvsd
 
-        ptvsd.enable_attach(address=("0.0.0.0", 3000))
+        address = ("0.0.0.0", 3000)
+        ptvsd.enable_attach(address=address)
+        logger.info(f"Waiting for debugger to attach at {address}")
         ptvsd.wait_for_attach()
     del args.debug
 

@@ -222,6 +222,7 @@ def train_setup_parser(parser):
     parser.add_argument(
         "--shuffle-samples",
         action="store_true",
+        default=None,
         help="Shuffle samples before constructing LSTM sequences",
     )
     parser.add_argument(
@@ -242,17 +243,22 @@ def train_setup_parser(parser):
         "-k",
         "--checkpoint",
         action="store_true",
+        default=None,
         dest=dest,
         help="Save model checkpoint every epoch",
     )
     group.add_argument("--no-checkpoint", action="store_false", dest=dest)
     parser.add_argument(
-        "--tensorboard", action="store_true", help="Save TensorBoard logs every epoch",
+        "--tensorboard",
+        action="store_true",
+        default=None,
+        help="Save TensorBoard logs every epoch",
     )
     parser.add_argument(
         "-g",
         "--gradient-metrics",
         action="store_true",
+        default=None,
         help="Print metrics in Gradient chart format every epoch",
     )
 
