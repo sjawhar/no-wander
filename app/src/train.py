@@ -119,6 +119,10 @@ def build_and_train_model(
     # Data prep params
     preprocess=PREPROCESS_NONE,
     shuffle_samples=False,
+    # Logging params
+    checkpoint=True,
+    tensorboard=False,
+    gradient_metrics=False,
     **train_kwargs,
 ):
     samples, labels, features_raw = read_dataset(
@@ -150,11 +154,17 @@ def build_and_train_model(
     if train_kwargs.get("epochs"):
         X, Y = get_sequences(samples, labels, input_shape, shuffle_samples)
         history = train_model(
-            model, X, Y, checkpoint_path=model_dir / "best_model", **train_kwargs
+            model,
+            X,
+            Y,
+            checkpoint_path=model_dir / "model_best" if checkpoint else None,
+            tensorboard_path=model_dir / "tensorboard" if tensorboard else None,
+            gradient_metrics=gradient_metrics,
+            **train_kwargs,
         )
         plot_training_history(history, model_dir)
 
-    model_path = str(model_dir / "final_model")
+    model_path = str(model_dir / "model_final")
     logger.info(f"Saving model to {model_path}...")
     model.save(model_path)
     logger.info("Done!")

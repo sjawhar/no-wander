@@ -136,3 +136,12 @@ Number of training epochs. Default is 1
 
 **`-b, --batch-size INT`**  
 Training batch size. Default is determined by `keras.Model.fit()`
+
+**`-k, --checkpoint` / `--no-checkpoint`**  
+Enabled / Disable saving of model checkpoint every epoch. Default is enabled
+
+**`--tensorboard`**  
+Save TensorBoard logs every epoch. Default is false
+
+**`-g, --gradient-metrics`**  
+Print metrics in Gradient chart format every epoch. Default is false

@@ -221,9 +221,7 @@ def train_setup_parser(parser):
     parser.add_argument("--decay", type=float, help="decay parameter for optimizer")
     parser.add_argument(
         "--shuffle-samples",
-        action="store_const",
-        const=True,
-        default=False,
+        action="store_true",
         help="Shuffle samples before constructing LSTM sequences",
     )
     parser.add_argument(
@@ -237,6 +235,26 @@ def train_setup_parser(parser):
         "-e", "--epochs", type=int, default=1, help="Number of training epochs"
     )
     parser.add_argument("-b", "--batch-size", type=int, help="Training batch size")
+
+    dest = "checkpoint"
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "-k",
+        "--checkpoint",
+        action="store_true",
+        dest=dest,
+        help="Save model checkpoint every epoch",
+    )
+    group.add_argument("--no-checkpoint", action="store_false", dest=dest)
+    parser.add_argument(
+        "--tensorboard", action="store_true", help="Save TensorBoard logs every epoch",
+    )
+    parser.add_argument(
+        "-g",
+        "--gradient-metrics",
+        action="store_true",
+        help="Print metrics in Gradient chart format every epoch",
+    )
 
 
 def train_run(args, **kwargs):

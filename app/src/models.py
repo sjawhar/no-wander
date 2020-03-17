@@ -1,5 +1,6 @@
+import json
 import logging
-from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint, TensorBoard
 from tensorflow.keras.layers import (
     Activation,
     BatchNormalization,
@@ -19,6 +20,18 @@ PARAM_ACTIVATION = "activation"
 PARAM_INPUT_SHAPE = "input_shape"
 PARAM_RETURN_SEQUENCES = "return_sequences"
 PARAM_UNITS = "units"
+
+
+class GradientMetricsCallback(Callback):
+    def on_epoch_end(self, epoch, logs):
+        if not hasattr(self, "is_chart_created"):
+            self.is_chart_created = {}
+
+        for metric, value in logs.items():
+            if metric not in self.is_chart_created:
+                print("\n" + json.dumps({"chart": metric, "axis": "epoch"}))
+                self.is_chart_created[metric] = True
+            print("\n" + json.dumps({"chart": metric, "x": epoch, "y": float(value)}))
 
 
 def add_ic_layer(model, name, dropout=0.2, batchnorm=True):
@@ -50,7 +63,15 @@ def compile_model(model, learning_rate, beta_one, beta_two, decay):
     model.compile(opt, loss="binary_crossentropy", metrics=["accuracy"])
 
 
-def fit_model(model, X, Y, checkpoint_path=None, **kwargs):
+def fit_model(
+    model,
+    X,
+    Y,
+    checkpoint_path=None,
+    tensorboard_path=None,
+    gradient_metrics=False,
+    **kwargs,
+):
     callbacks = []
     if checkpoint_path is not None:
         checkpoint_path = str(checkpoint_path)
@@ -58,6 +79,14 @@ def fit_model(model, X, Y, checkpoint_path=None, **kwargs):
         callbacks.append(
             ModelCheckpoint(checkpoint_path, save_best_only=True, monitor="val_loss")
         )
+    if tensorboard_path is not None:
+        tensorboard_path = str(tensorboard_path)
+        logger.debug(f"TensorBoard logs will be saved to {tensorboard_path}")
+        callbacks.append(
+            TensorBoard(tensorboard_path, histogram_freq=100, write_images=True)
+        )
+    if gradient_metrics:
+        callbacks.append(GradientMetricsCallback())
     return model.fit(X, Y, callbacks=callbacks, **kwargs)
 
 
