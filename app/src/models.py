@@ -20,6 +20,7 @@ PARAM_ACTIVATION = "activation"
 PARAM_INPUT_SHAPE = "input_shape"
 PARAM_RETURN_SEQUENCES = "return_sequences"
 PARAM_UNITS = "units"
+PARAM_VERBOSE = "verbose"
 
 
 class GradientMetricsCallback(Callback):
@@ -29,9 +30,9 @@ class GradientMetricsCallback(Callback):
 
         for metric, value in logs.items():
             if metric not in self.is_chart_created:
-                print("\n" + json.dumps({"chart": metric, "axis": "epoch"}))
+                print(json.dumps({"chart": metric, "axis": "epoch"}))
                 self.is_chart_created[metric] = True
-            print("\n" + json.dumps({"chart": metric, "x": epoch, "y": float(value)}))
+            print(json.dumps({"chart": metric, "x": epoch, "y": float(value)}))
 
 
 def add_ic_layer(model, name, dropout=0.2, batchnorm=True):
@@ -87,6 +88,7 @@ def fit_model(
         )
     if gradient_metrics:
         callbacks.append(GradientMetricsCallback())
+        kwargs[PARAM_VERBOSE] = 0
     return model.fit(X, Y, callbacks=callbacks, **kwargs)
 
 
