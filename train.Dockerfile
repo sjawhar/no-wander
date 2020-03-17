@@ -11,7 +11,6 @@ RUN DEV_PACKAGES=" \
         git+https://github.com/aestrivex/bctpy@0.5.1 \
         graphviz \
         jupyterlab \
-        keras \
         mne \
         pandas \
         pydot \

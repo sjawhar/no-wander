@@ -1,5 +1,6 @@
 import logging
-from keras.layers import (
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.layers import (
     Activation,
     BatchNormalization,
     Conv1D,
@@ -8,9 +9,9 @@ from keras.layers import (
     LSTM,
     MaxPooling1D,
 )
-from keras.models import Sequential
-from keras.optimizers import Adam
-from keras.utils import plot_model
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.utils import plot_model
 
 logger = logging.getLogger(__name__)
 
@@ -44,11 +45,20 @@ def add_conv1d_layer(model, name, ic_params={}, pool=None, **kwargs):
     add_ic_layer(model, name, **ic_params)
 
 
-def compile_model(
-    model, learning_rate, beta_one, beta_two, decay,
-):
+def compile_model(model, learning_rate, beta_one, beta_two, decay):
     opt = Adam(learning_rate, beta_one, beta_two, decay)
     model.compile(opt, loss="binary_crossentropy", metrics=["accuracy"])
+
+
+def fit_model(model, X, Y, checkpoint_path=None, **kwargs):
+    callbacks = []
+    if checkpoint_path is not None:
+        checkpoint_path = str(checkpoint_path)
+        logger.debug(f"Model with best val_loss will be saved to {checkpoint_path}")
+        callbacks.append(
+            ModelCheckpoint(checkpoint_path, save_best_only=True, monitor="val_loss")
+        )
+    return model.fit(X, Y, callbacks=callbacks, **kwargs)
 
 
 def get_lstm_model(

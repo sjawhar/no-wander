@@ -4,7 +4,7 @@ from pathlib import Path
 from sklearn.model_selection import train_test_split
 from .datasets import read_dataset
 from .features import preprocess_data
-from .models import compile_model, get_lstm_model
+from .models import compile_model, fit_model, get_lstm_model
 from .constants import PREPROCESS_NONE
 
 LEARNING_RATE = 0.1
@@ -63,7 +63,7 @@ def train_model(
     beta_one=BETA_ONE,
     beta_two=BETA_TWO,
     decay=DECAY,
-    **fit_kwargs,
+    **kwargs,
 ):
     validation_data = None
     if test_split:
@@ -74,7 +74,14 @@ def train_model(
         validation_data = (X_test, Y_test)
 
     compile_model(model, learning_rate, beta_one, beta_two, decay)
-    return model.fit(X, Y, validation_data=validation_data, **fit_kwargs)
+
+    try:
+        history = fit_model(model, X, Y, validation_data=validation_data, **kwargs)
+    except KeyboardInterrupt:
+        logger.info("\nTraining interrupted!")
+        history = model.history
+
+    return history
 
 
 def plot_training_history(history, model_dir):
@@ -142,15 +149,12 @@ def build_and_train_model(
 
     if train_kwargs.get("epochs"):
         X, Y = get_sequences(samples, labels, input_shape, shuffle_samples)
-
-        try:
-            history = train_model(model, X, Y, **train_kwargs)
-        except KeyboardInterrupt:
-            logger.info("\nTraining interrupted!")
-            history = model.history
+        history = train_model(
+            model, X, Y, checkpoint_path=model_dir / "best_model", **train_kwargs
+        )
         plot_training_history(history, model_dir)
 
-    model_path = model_dir / "model.h5"
+    model_path = str(model_dir / "final_model")
     logger.info(f"Saving model to {model_path}...")
     model.save(model_path)
     logger.info("Done!")
