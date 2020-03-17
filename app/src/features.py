@@ -50,7 +50,7 @@ def extract_time_features(X):
         [enrich(X, axis=-1, **kwargs) for (_, enrich, kwargs) in enrichers], axis=-1,
     )
 
-    return X_enriched, [feat for (feat, _, _) in enrichers]
+    return X_enriched, None, [feat for (feat, _, _) in enrichers]
 
 
 def extract_frequency_features(X):
@@ -78,7 +78,8 @@ def extract_frequency_features(X):
     bands.append(["energy", total])
 
     dwt_level = 7
-    coeff_approx, coeff_detail = wavedec(X, "db4", level=dwt_level)[:2]
+    wavelet = "db4"
+    coeff_approx, coeff_detail = wavedec(X, wavelet, level=dwt_level)[:2]
     X_enriched = np.concatenate(
         [band for (_, band) in bands]
         + [
@@ -92,7 +93,8 @@ def extract_frequency_features(X):
     features += [f"cA{dwt_level}_{i}" for i in range(coeff_approx.shape[-1])]
     features += [f"cD{dwt_level}_{i}" for i in range(coeff_detail.shape[-1])]
 
-    return X_enriched, features
+    extractor = {"wavedec": {"wavelet": wavelet, "level": dwt_level}}
+    return X_enriched, extractor, features
 
 
 def extract_epoch_graph_features(W):
@@ -179,35 +181,40 @@ def extract_correlation_features(X, channels):
     ]
     features_corr += ["charpath", "eff", "radius", "diameter"]
 
-    return X_corr, features_corr
+    return X_corr, None, features_corr
 
 
 def extract_eeg_features(X_raw, features):
     X_eeg, channels = get_eeg_data(X_raw, features)
 
-    X_time, features_time = extract_time_features(X_eeg)
-    X_freq, features_freq = extract_frequency_features(X_eeg)
-    X_corr, features_corr = extract_correlation_features(X_eeg, channels)
+    X_time, extractor_time, features_time = extract_time_features(X_eeg)
+    X_freq, extractor_freq, features_freq = extract_frequency_features(X_eeg)
+    X_corr, extractor_corr, features_corr = extract_correlation_features(
+        X_eeg, channels
+    )
 
     X_enriched = np.concatenate([X_time, X_freq, X_corr], axis=-1)
     features = features_time + features_freq
     features = [f"{channel}_{enrich}" for enrich in features for channel in channels]
     features += features_corr
 
-    return X_enriched, features
+    extractor = {"time": extractor_time, "freq": extractor_freq, "corr": extractor_corr}
+    return X_enriched, extractor, features
 
 
 def normalize_data(X_raw):
-    from sklearn.preprocessing import robust_scale
+    from sklearn.preprocessing import RobustScaler
 
-    return robust_scale(X_raw.reshape(-1, X_raw.shape[-1])).reshape(X_raw.shape)
+    scaler = RobustScaler()
+    X = scaler.fit_transform(X_raw.reshape(-1, X_raw.shape[-1])).reshape(X_raw.shape)
+    return X, scaler
 
 
 def preprocess_data(X_raw, features, preprocess):
     if preprocess == PREPROCESS_EXTRACT_EEG:
         return (*extract_eeg_features(X_raw, features), True)
     elif preprocess == PREPROCESS_NONE:
-        return X_raw, features, False
+        return X_raw, None, features, False
     elif preprocess == PREPROCESS_NORMALIZE:
-        return normalize_data(X_raw), features, False
+        return (*normalize_data(X_raw), features, False)
     raise ValueError(f"Unknown preprocessing type {preprocess}")

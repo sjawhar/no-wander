@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+import pickle
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from .datasets import read_dataset
@@ -125,21 +126,28 @@ def build_and_train_model(
     gradient_metrics=False,
     **train_kwargs,
 ):
+    model_dir = Path(model_dir).resolve()
+    if not model_dir.exists():
+        model_dir.mkdir()
+    logger.debug(f"Model files will be saved to {model_dir}")
+
     samples, labels, features_raw = read_dataset(
         data_file, sample_size, include_partial_window=shuffle_samples
     )
     logger.info(f"{len(samples)} samples in training set")
     logger.info(f"Raw features: {', '.join(features_raw)}")
 
-    samples, features, is_flattened = preprocess_data(samples, features_raw, preprocess)
+    samples, preprocessor, features, is_flattened = preprocess_data(
+        samples, features_raw, preprocess
+    )
     input_shape = (sequence_size, len(features) * (1 if is_flattened else sample_size))
     logger.info(f"Preprocessed features: {', '.join(features)}")
     logger.info(f"Input shape: {input_shape}")
-
-    model_dir = Path(model_dir).resolve()
-    if not model_dir.exists():
-        model_dir.mkdir()
-    logger.debug(f"Saving model files to {model_dir}")
+    if preprocessor is not None:
+        preprocess_path = str(model_dir / f"preprocess.pickle")
+        logger.info(f"Saving preprocessing details to {preprocess_path}...")
+        with open(preprocess_path, "wb") as f:
+            pickle.dump((preprocess, preprocessor), f)
 
     model = get_lstm_model(
         input_shape,
