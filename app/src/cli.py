@@ -199,6 +199,18 @@ def train_setup_parser(parser):
         help="JSON object of parameters to pass to Dense(). ic_params controls IC layer after activation.",
     )
     parser.add_argument(
+        "--pre-window",
+        type=float,
+        nargs=2,
+        help="Start and end of pre-recovery window, in seconds. Should be negative numbers (e.g. --pre-window -7 -1)",
+    )
+    parser.add_argument(
+        "--post-window",
+        type=float,
+        nargs=2,
+        help="Start and end of post-recovery window, in seconds.",
+    )
+    parser.add_argument(
         "-p",
         "--preprocess",
         action="store",

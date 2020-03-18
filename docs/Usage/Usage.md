@@ -78,7 +78,9 @@ Percentage of data to reserve for testing. Default is 0.2
 Channel name for Right Aux. Must be provided if Right Aux has data, otherwise channel is dropped.
 
 ### Train
-Builds a model (currently only LSTM is supported) and saves the built model and diagram image in `MODEL_DIR`. If `epochs` is not 0, also trains the model on the data in `DATA_FILE` and saves the trained model and training history to `MODEL_DIR`. Even if `epochs` is not 0, `DATA_FILE` is required to determine the input size to the LSTM.
+Builds a model (currently only LSTM is supported) and saves the built model and diagram image in `MODEL_DIR`. If `--epochs` is not 0, also trains the model on the data in `DATA_FILE` and saves the trained model and training history to `MODEL_DIR`. Even if `--epochs` is not 0, `DATA_FILE` is required to determine the input size to the LSTM.
+
+Note that if `--shuffle-samples` is not true, only samples belonging to contiguous sequences of length `--sequence-size` are used.
 
 ```bash
 train [arguments] DATA_FILE MODEL_DIR
@@ -106,6 +108,12 @@ JSON array of parameters to pass to Conv1D(). Default is to not use a conv layer
 
 **`-d, --dense JSON`**  
 JSON object of parameters to pass to Dense(). Default is a 32-unit dense layer. `ic_params` controls IC layer after activation.
+
+**`--pre-window FLOAT FLOAT`**  
+Start and end of pre-recovery window, in seconds. Should be negative numbers. Default is `-7 -1`
+
+**`--post-window FLOAT FLOAT`**  
+Start and end of post-recovery window, in seconds. Default is `0 3`
 
 **`-p, --preprocess`**  
 Type of preprocessing to perform on input data. Valid options are "extract-eeg", "normalize", and "none". Default is "none".

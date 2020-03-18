@@ -93,8 +93,8 @@ def read_dataset(
 ):
     logger.info(f"Reading datasets from {filepath}...")
     data, features = parse_dataset(filepath)
-    pre_window = tuple(ix * sample_rate for ix in pre_window)
-    post_window = tuple(ix * sample_rate for ix in post_window)
+    pre_window = tuple(int(ix * sample_rate) for ix in pre_window)
+    post_window = tuple(int(ix * sample_rate) for ix in post_window)
     samples, num_samples = get_samples(
         data, sample_size, consecutive_samples, pre_window, post_window
     )
