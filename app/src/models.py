@@ -1,5 +1,6 @@
 import json
 import logging
+from tensorflow.keras import regularizers
 from tensorflow.keras.callbacks import Callback, ModelCheckpoint, TensorBoard
 from tensorflow.keras.layers import (
     Activation,
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 PARAM_ACTIVATION = "activation"
 PARAM_INPUT_SHAPE = "input_shape"
 PARAM_RETURN_SEQUENCES = "return_sequences"
+PARAM_POOL_SIZE = "pool_size"
 PARAM_UNITS = "units"
 PARAM_VERBOSE = "verbose"
 
@@ -47,6 +49,21 @@ def add_ic_layer(model, name, dropout=0.2, batchnorm=True):
 
 
 def add_layer(model, layer, name, ic_params={}, **kwargs):
+    for arg in kwargs:
+        if not arg.endswith("_regularizer"):
+            continue
+        config = kwargs[arg]
+        if config is None or isinstance(config, regularizers.Regularizer):
+            continue
+        reg = (
+            regularizers.L1L2(**config)
+            if type(config) is dict
+            else regularizers.get(config)
+        )
+        logger.debug(
+            f"Adding regularizer {type(reg).__name__} to {name}: {reg.get_config()}"
+        )
+        kwargs[arg] = reg
     logger.debug(f'Adding layer "{name}" - {layer.__name__}: {kwargs}')
     model.add(layer(name=name, **kwargs))
     if type(ic_params) is not dict:
@@ -56,7 +73,11 @@ def add_layer(model, layer, name, ic_params={}, **kwargs):
 
 def add_conv1d_layer(model, name, ic_params={}, pool=None, **kwargs):
     add_layer(model, Conv1D, name, ic_params=None, **kwargs)
-    if pool is not None:
+    if pool:
+        if pool is True:
+            pool = {}
+        elif type(pool) is int:
+            pool = {PARAM_POOL_SIZE: pool}
         add_layer(model, MaxPooling1D, f"{name}_pool", ic_params=None, **pool)
     add_ic_layer(model, name, **ic_params)
 

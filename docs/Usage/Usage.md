@@ -80,8 +80,6 @@ Channel name for Right Aux. Must be provided if Right Aux has data, otherwise ch
 ### Train
 Builds a model (currently only LSTM is supported) and saves the built model and diagram image in `MODEL_DIR`. If `--epochs` is not 0, also trains the model on the data in `DATA_FILE` and saves the trained model and training history to `MODEL_DIR`. Even if `--epochs` is not 0, `DATA_FILE` is required to determine the input size to the LSTM.
 
-Note that if `--shuffle-samples` is not true, only samples belonging to contiguous sequences of length `--sequence-size` are used.
-
 ```bash
 train [arguments] DATA_FILE MODEL_DIR
 ```
@@ -153,3 +151,10 @@ Save TensorBoard logs every epoch. Default is false
 
 **`-g, --gradient-metrics`**  
 Print metrics in Gradient chart format every epoch. Default is false
+
+#### Usage Notes
+* If `--shuffle-samples` is not true, only samples belonging to contiguous sequences of length `--sequence-size` are used.
+* Layer specification parameters (e.g. `--lstm`, `--conv1d`) should be list of objects in JSON format, where each object in the list contains the specification of a single layer. To create only one layer, you can also use a single JSON object instead of an array of length 1. Please refer to the YAML files in the .ps_project folder for examples.
+* Each layer specification object can include one or more regularization parameters (e.g. `kernel_regularizer`). The value of these parameters should be either a string or a dict. For example:
+  * `"l1"` or `"l2"` will create the corresponding regularizer with default parameters.
+  * `{"l1": 0.1, "l2": 0.2}` will create an l1_l2 regularizer with parameters `l1=0.1, l2=0.2`. You don't need to include both l1 and l2 values.
