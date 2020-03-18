@@ -237,11 +237,10 @@ $RECYCLE.BIN/
 
 .config
 .psychopy3
-data/**/*.csv
-data/**/*.h5
-data/**/*.7z
-models/**/*.h5
-models/**/*.png
+data/**/*
+!data/.gitkeep
+models/**/*
+!models/.gitkeep
 notebooks/tmp*.ipynb
 notebooks/*.png
 *.code-workspace

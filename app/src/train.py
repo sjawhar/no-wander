@@ -13,6 +13,8 @@ BETA_ONE = 0.9
 BETA_TWO = 0.999
 DECAY = 0.01
 RANDOM_SEED = 42
+WINDOW_POST_RECOVERY = (0, 3)
+WINDOW_PRE_RECOVERY = (-7, -1)
 
 logger = logging.getLogger(__name__)
 
@@ -118,6 +120,8 @@ def build_and_train_model(
     dense_params={},
     dropout=0,
     # Data prep params
+    post_window=WINDOW_POST_RECOVERY,
+    pre_window=WINDOW_PRE_RECOVERY,
     preprocess=PREPROCESS_NONE,
     shuffle_samples=False,
     # Logging params
@@ -132,7 +136,11 @@ def build_and_train_model(
     logger.debug(f"Model files will be saved to {model_dir}")
 
     samples, labels, features_raw = read_dataset(
-        data_file, sample_size, include_partial_window=shuffle_samples
+        data_file,
+        sample_size,
+        1 if shuffle_samples else sequence_size,
+        pre_window,
+        post_window,
     )
     logger.info(f"{len(samples)} samples in training set")
     logger.info(f"Raw features: {', '.join(features_raw)}")

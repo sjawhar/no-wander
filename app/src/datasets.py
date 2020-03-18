@@ -3,9 +3,6 @@ import logging
 import numpy as np
 from .constants import COL_MARKER_DEFAULT, SAMPLE_RATE
 
-WINDOW_POST_RECOVERY = (0, SAMPLE_RATE * 3)
-WINDOW_PRE_RECOVERY = (SAMPLE_RATE * -7, SAMPLE_RATE * -1)
-
 logger = logging.getLogger(__name__)
 
 
@@ -28,24 +25,25 @@ def parse_dataset(filepath):
     return data, [feat for (feat, _) in sorted(features.items(), key=lambda x: x[1])]
 
 
-def get_window_samples(data, window, sample_size):
-    curr, stop = window
-    end = len(data)
-    if curr < 0:
-        curr += end
-        stop += end
-    while curr < 0:
-        curr += sample_size
+def get_window_samples(data, sample_size, consecutive_samples, window):
+    start, stop = window
+    is_flip = stop < 0
+    if is_flip:
+        start, stop = -stop, -start
+        data = data[::-1]
 
-    samples = []
-    while end >= curr + sample_size <= stop:
-        samples.append(data[curr : curr + sample_size])
-        curr += sample_size
+    data = data[start:stop]
+    drop = len(data) % (sample_size * consecutive_samples)
+    if drop > 0:
+        data = data[:-drop]
 
-    return samples
+    samples = data.reshape(-1, sample_size, data.shape[1])
+    if is_flip:
+        samples = samples[::-1, ::-1]
+    return list(samples), drop
 
 
-def get_samples(data, sample_size, include_partial_window):
+def get_samples(data, sample_size, consecutive_samples, pre_window, post_window):
     parsed = [None] * len(data)
     num_samples = 0
 
@@ -53,16 +51,15 @@ def get_samples(data, sample_size, include_partial_window):
         dset, recovery_ix, features = data[i]
         parsed[i] = [[], [], features]
         for j, window_data, window, window_name in [
-            (0, dset[:recovery_ix], WINDOW_PRE_RECOVERY, "pre"),
-            (1, dset[recovery_ix:], WINDOW_POST_RECOVERY, "post"),
+            (0, dset[:recovery_ix], pre_window, "pre"),
+            (1, dset[recovery_ix:], post_window, "post"),
         ]:
-            data_size = len(window_data)
-            full_window_size = max(abs(p) for p in window)
-            if not include_partial_window and data_size < full_window_size:
-                logger.debug(f"Short {window_name} window of size {data_size} dropped")
-                continue
-            window_samples = get_window_samples(window_data, window, sample_size)
+            window_samples, dropped = get_window_samples(
+                window_data, sample_size, consecutive_samples, window
+            )
             parsed[i][j] = window_samples
+            if dropped > 0:
+                logger.debug(f"Dropped {dropped} readings from {window_name} window")
             num_samples += len(window_samples)
 
     return parsed, num_samples
@@ -75,9 +72,10 @@ def samples_to_tensors(samples, data_shape):
     i = 0
     for pre, post, features in samples:
         for window, label in [(pre, 0), (post, 1)]:
-            i_next = i + len(window)
-            if i == i_next:
+            window_size = len(window)
+            if window_size == 0:
                 continue
+            i_next = i + window_size
             X[i:i_next, :, features] = window
             Y[i:i_next] = label
             i = i_next
@@ -85,10 +83,21 @@ def samples_to_tensors(samples, data_shape):
     return X, Y
 
 
-def read_dataset(filepath, sample_size, include_partial_window=False):
+def read_dataset(
+    filepath,
+    sample_size,
+    consecutive_samples,
+    pre_window,
+    post_window,
+    sample_rate=SAMPLE_RATE,
+):
     logger.info(f"Reading datasets from {filepath}...")
     data, features = parse_dataset(filepath)
-    samples, num_samples = get_samples(data, sample_size, include_partial_window)
+    pre_window = tuple(ix * sample_rate for ix in pre_window)
+    post_window = tuple(ix * sample_rate for ix in post_window)
+    samples, num_samples = get_samples(
+        data, sample_size, consecutive_samples, pre_window, post_window
+    )
     X, Y = samples_to_tensors(samples, (num_samples, sample_size, len(features)))
     logger.debug(f"Data shape {X.shape}")
     return X, Y, features
