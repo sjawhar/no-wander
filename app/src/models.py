@@ -79,6 +79,8 @@ def add_conv1d_layer(model, name, ic_params={}, pool=None, **kwargs):
         elif type(pool) is int:
             pool = {PARAM_POOL_SIZE: pool}
         add_layer(model, MaxPooling1D, f"{name}_pool", ic_params=None, **pool)
+    if type(ic_params) is not dict:
+        return
     add_ic_layer(model, name, **ic_params)
 
 
