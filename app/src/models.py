@@ -3,10 +3,10 @@ import logging
 from tensorflow.keras import regularizers
 from tensorflow.keras.callbacks import Callback, ModelCheckpoint, TensorBoard
 from tensorflow.keras.layers import (
-    Activation,
     BatchNormalization,
     Conv1D,
     Dense,
+    deserialize,
     Dropout,
     LSTM,
     MaxPooling1D,
@@ -19,8 +19,9 @@ logger = logging.getLogger(__name__)
 
 PARAM_ACTIVATION = "activation"
 PARAM_INPUT_SHAPE = "input_shape"
-PARAM_RETURN_SEQUENCES = "return_sequences"
+PARAM_NAME = "name"
 PARAM_POOL_SIZE = "pool_size"
+PARAM_RETURN_SEQUENCES = "return_sequences"
 PARAM_UNITS = "units"
 PARAM_VERBOSE = "verbose"
 
@@ -39,16 +40,18 @@ class GradientMetricsCallback(Callback):
         print("")
 
 
-def add_ic_layer(model, name, dropout=0.2, batchnorm=True):
+def _get_ic_layers(name, dropout=0.2, batchnorm=True):
+    layers = []
     if batchnorm:
         logger.debug(f'Adding layer "{name}" - BatchNorm')
-        model.add(BatchNormalization(name=f"{name}_bn"))
+        layers.append(BatchNormalization(name=f"{name}_bn"))
     if dropout:
         logger.debug(f'Adding layer "{name}" - Dropout: {dropout}')
-        model.add(Dropout(dropout, name=f"{name}_dropout"))
+        layers.append(Dropout(dropout, name=f"{name}_dropout"))
+    return layers
 
 
-def add_layer(model, layer, name, ic_params={}, **kwargs):
+def _get_layers(layer_type, name, ic_params={}, **kwargs):
     for arg in kwargs:
         if not arg.endswith("_regularizer"):
             continue
@@ -61,27 +64,115 @@ def add_layer(model, layer, name, ic_params={}, **kwargs):
             else regularizers.get(config)
         )
         logger.debug(
-            f"Adding regularizer {type(reg).__name__} to {name}: {reg.get_config()}"
+            f"Adding regularizer {reg.__class__.__name__} to {name}: {reg.get_config()}"
         )
         kwargs[arg] = reg
-    logger.debug(f'Adding layer "{name}" - {layer.__name__}: {kwargs}')
-    model.add(layer(name=name, **kwargs))
-    if type(ic_params) is not dict:
-        return
-    add_ic_layer(model, name, **ic_params)
+
+    if type(layer_type) is type:
+        layer_type = layer_type.__name__
+    logger.debug(f'Adding layer "{name}" - {layer_type}: {kwargs}')
+    layers = [
+        deserialize({"class_name": layer_type, "config": {PARAM_NAME: name, **kwargs}})
+    ]
+    if type(ic_params) is dict:
+        layers += _get_ic_layers(name, **ic_params)
+    return layers
 
 
-def add_conv1d_layer(model, name, ic_params={}, pool=None, **kwargs):
-    add_layer(model, Conv1D, name, ic_params=None, **kwargs)
-    if pool:
-        if pool is True:
-            pool = {}
-        elif type(pool) is int:
-            pool = {PARAM_POOL_SIZE: pool}
-        add_layer(model, MaxPooling1D, f"{name}_pool", ic_params=None, **pool)
-    if type(ic_params) is not dict:
-        return
-    add_ic_layer(model, name, **ic_params)
+def get_conv1d_layers(name, ic_params={}, pool=None, **kwargs):
+    kwargs.setdefault(PARAM_ACTIVATION, "relu")
+    layers = _get_layers(Conv1D, name, ic_params=ic_params, **kwargs)
+    if not pool:
+        return layers
+
+    if pool is True:
+        pool = {}
+    elif type(pool) is int:
+        pool = {PARAM_POOL_SIZE: pool}
+    layers.insert(
+        -1, _get_layers(MaxPooling1D, name=f"{name}_pool", ic_params=None, **pool)[0]
+    )
+    return layers
+
+
+def get_layers(layer_type, name, is_last_of_type=False, **layer_params):
+    layer = None
+    if layer_type == Conv1D.__name__:
+        return get_conv1d_layers(name, **layer_params)
+    elif layer_type == LSTM.__name__:
+        layer_params.setdefault(PARAM_RETURN_SEQUENCES, not is_last_of_type)
+    elif layer_type == Dense.__name__:
+        layer_params.setdefault(PARAM_ACTIVATION, "relu")
+    return _get_layers(layer_type, name, **layer_params)
+
+
+def get_model_from_layers(
+    layers, input_shape, dropout=0, plot_model_file=None,
+):
+    is_input_layer = True
+    if type(layers) is not list:
+        layers = [layers]
+    elif len(layers) == 0:
+        raise ValueError("Must specify at least one layer")
+
+    model_layers = []
+    if dropout > 0:
+        noise_shape = [None, *input_shape]
+        if layers[0]["type"] == LSTM.__name__:
+            noise_shape[1] = 1
+        model_layers = _get_layers(
+            Dropout,
+            "input_dropout",
+            ic_params=None,
+            input_shape=input_shape,
+            noise_shape=noise_shape,
+            rate=dropout,
+        )
+        is_input_layer = False
+
+    last_layers = {}
+    num_layers = len(layers)
+    for i in range(num_layers)[::-1]:
+        layer_type = layers[i].get("type")
+        if layer_type in last_layers:
+            continue
+        last_layers[layer_type] = i
+
+    layer_count = {}
+    for i in range(num_layers):
+        layer_params = layers[i]
+        layer_type = layer_params.pop("type")
+        if layer_type not in layer_count:
+            layer_count[layer_type] = 0
+        layer_count[layer_type] += 1
+
+        name = layer_params.pop(
+            PARAM_NAME, f"{layer_type}_{layer_count[layer_type]}".lower()
+        )
+        if is_input_layer:
+            layer_params[PARAM_INPUT_SHAPE] = input_shape
+            is_input_layer = False
+        model_layers += get_layers(
+            layer_type,
+            name,
+            is_last_of_type=i == last_layers[layer_type],
+            **layer_params,
+        )
+
+    model_layers += _get_layers(
+        Dense,
+        "output",
+        ic_params=None,
+        **{PARAM_UNITS: 1, PARAM_ACTIVATION: "sigmoid"},
+    )
+
+    model = Sequential(model_layers)
+    if plot_model_file is not None:
+        plot_model(
+            model, to_file=plot_model_file, show_shapes=True, show_layer_names=True
+        )
+
+    return model
 
 
 def compile_model(model, learning_rate, beta_one, beta_two, decay):
@@ -114,76 +205,3 @@ def fit_model(
     if gradient_metrics:
         callbacks.append(GradientMetricsCallback())
     return model.fit(X, Y, callbacks=callbacks, **kwargs)
-
-
-def get_lstm_model(
-    input_shape,
-    lstm_layers,
-    conv1d_layers=[],
-    dense_params={},
-    dropout=0,
-    plot_model_file=None,
-):
-    model = Sequential()
-    is_input_layer = True
-
-    if type(conv1d_layers) is not list:
-        conv1d_layers = [conv1d_layers]
-    if type(lstm_layers) is not list:
-        lstm_layers = [lstm_layers]
-
-    if dropout > 0:
-        noise_shape = [None, *input_shape]
-        if len(conv1d_layers):
-            noise_shape[1] = 1
-        add_layer(
-            model,
-            Dropout,
-            "input_dropout",
-            ic_params=None,
-            input_shape=input_shape,
-            noise_shape=noise_shape,
-            rate=dropout,
-        )
-        is_input_layer = False
-
-    for i in range(len(conv1d_layers)):
-        name = f"conv1d_{i + 1}"
-        conv1d_params = conv1d_layers[i]
-        if is_input_layer:
-            conv1d_params[PARAM_INPUT_SHAPE] = input_shape
-            is_input_layer = False
-        conv1d_params[PARAM_ACTIVATION] = conv1d_params.get(PARAM_ACTIVATION, "relu")
-        add_conv1d_layer(model, name, **conv1d_params)
-
-    num_lstm_layers = len(lstm_layers)
-    for i in range(num_lstm_layers):
-        name = f"lstm_{i + 1}"
-        lstm_params = lstm_layers[i]
-        if is_input_layer:
-            lstm_params[PARAM_INPUT_SHAPE] = input_shape
-            is_input_layer = False
-        if PARAM_RETURN_SEQUENCES not in lstm_params:
-            lstm_params[PARAM_RETURN_SEQUENCES] = i < num_lstm_layers - 1
-        add_layer(model, LSTM, name, **lstm_params)
-
-    dense_params.update(
-        {
-            PARAM_UNITS: dense_params.get(PARAM_UNITS, 32),
-            PARAM_ACTIVATION: dense_params.get(PARAM_ACTIVATION, "relu"),
-        }
-    )
-    add_layer(model, Dense, "dense", **dense_params)
-    add_layer(
-        model,
-        Dense,
-        "output",
-        **{PARAM_UNITS: 1, PARAM_ACTIVATION: "sigmoid", "ic_params": None},
-    )
-
-    if plot_model_file is not None:
-        plot_model(
-            model, to_file=plot_model_file, show_shapes=True, show_layer_names=True
-        )
-
-    return model

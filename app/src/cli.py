@@ -177,26 +177,17 @@ def train_setup_parser(parser):
     )
     parser.add_argument(
         "-l",
-        "--lstm",
-        dest="lstm_layers",
+        "--layers",
         type=type_json,
         required=True,
-        help="JSON array of parameters to pass to LSTM(). ic_params controls IC layer after activation.",
-    )
-    parser.add_argument(
-        "-c",
-        "--conv1d",
-        dest="conv1d_layers",
-        type=type_json,
-        help="JSON array of parameters to pass to Conv1D(). ic_params controls IC layer after activation.",
-    )
-    parser.add_argument(
-        "-d",
-        "--dense",
-        dest="dense_params",
-        type=type_json,
-        default={},
-        help="JSON object of parameters to pass to Dense(). ic_params controls IC layer after activation.",
+        help=" ".join(
+            [
+                "JSON array of layers with params. 'type' controls layer type.",
+                "'ic_params' controls IC layer after activation.",
+                "Include a 'pool' attribute of kwargs in a Conv1D layer to add a MaxPooling1D layer before the IC layer.",
+                "A single output Dense layer with sigmoid activation is automatically added after all specified layers.",
+            ]
+        ),
     )
     parser.add_argument(
         "--pre-window",
@@ -284,6 +275,6 @@ def train_run(args, **kwargs):
         kwargs.pop("MODEL_DIR"),
         kwargs.pop("sample_size"),
         kwargs.pop("sequence_size"),
-        kwargs.pop("lstm_layers"),
+        kwargs.pop("layers"),
         **kwargs,
     )

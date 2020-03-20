@@ -97,16 +97,10 @@ Number of readings/timesteps per sample
 **`-q, --sequence-size INT`**  
 Number of samples per LSTM sequence
 
-**`-l, --lstm JSON`**  
-JSON array of parameters to pass to LSTM(). `ic_params` controls IC layer after activation.
+**`-l, --layers JSON`**  
+JSON array of layers with params. `type` controls layer type. `ic_params` controls IC layer after activation. Include a `pool` attribute of kwargs in a Conv1D layer to add a MaxPooling1D layer before the IC layer. A single-unit Dense layer with sigmoid activation is automatically added after all specified layers.
 
 #### Optional Arguments
-**`-c, --conv1d JSON`**  
-JSON array of parameters to pass to Conv1D(). Default is to not use a conv layer. `ic_params` controls IC layer after activation. Include a `pool` attribute of kwargs to add a MaxPooling1D layer after IC layer.
-
-**`-d, --dense JSON`**  
-JSON object of parameters to pass to Dense(). Default is a 32-unit dense layer. `ic_params` controls IC layer after activation.
-
 **`--pre-window FLOAT FLOAT`**  
 Start and end of pre-recovery window, in seconds. Should be negative numbers. Default is `-7 -1`
 
@@ -152,9 +146,17 @@ Save TensorBoard logs every epoch. Default is false
 **`-g, --gradient-metrics`**  
 Print metrics in Gradient chart format every epoch. Default is false
 
-#### Usage Notes
-* If `--shuffle-samples` is not true, only samples belonging to contiguous sequences of length `--sequence-size` are used.
-* Layer specification parameters (e.g. `--lstm`, `--conv1d`) should be list of objects in JSON format, where each object in the list contains the specification of a single layer. To create only one layer, you can also use a single JSON object instead of an array of length 1. Please refer to the YAML files in the .ps_project folder for examples.
-* Each layer specification object can include one or more regularization parameters (e.g. `kernel_regularizer`). The value of these parameters should be either a string or a dict. For example:
+#### Specifying Layers
+`--layers` should be list of objects in JSON format, where each object in the list contains the specification of a single layer. The `type` key in each object must correspond to the name of a Layer class in `tensorflow.keras.layers`. To create only one layer, you can also use a single JSON object instead of an array of length 1. Please refer to the YAML files in the .ps_project folder for examples.
+
+In general layers use their default values as specified in the Keras/TensorFlow documentation, with the following exceptions:
+* `Dense` and `Conv1D` layers default to `activation="relu"`.
+* An `LSTM` layer defaults to `return_sequences=False` if it is the final LSTM layer and `return_sequences=True` otherwise.
+
+Each layer specification object can include one or more regularization parameters (e.g. `kernel_regularizer`). The value of these parameters should be either a string or a dict:
   * `"l1"` or `"l2"` will create the corresponding regularizer with default parameters.
-  * `{"l1": 0.1, "l2": 0.2}` will create an l1_l2 regularizer with parameters `l1=0.1, l2=0.2`. You don't need to include both l1 and l2 values.
+  * `{"l1": 0.1, "l2": 0.2}` will create an `l1_l2` regularizer with parameters `l1=0.1, l2=0.2`. You don't need to include both l1 and l2 values.
+
+#### Other Notes
+* If `--shuffle-samples` is not true, only samples belonging to contiguous sequences of length `--sequence-size` are used.
+* If you include more flags in your command that are not listed above, they will be passed as kwargs to `model.fit()`.

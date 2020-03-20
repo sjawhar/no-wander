@@ -5,7 +5,7 @@ from pathlib import Path
 from sklearn.model_selection import train_test_split
 from .datasets import read_dataset
 from .features import preprocess_data
-from .models import compile_model, fit_model, get_lstm_model
+from .models import compile_model, fit_model, get_model_from_layers
 from .constants import PREPROCESS_NONE
 
 LEARNING_RATE = 0.1
@@ -115,9 +115,7 @@ def build_and_train_model(
     # Model params
     sample_size,
     sequence_size,
-    lstm_layers,
-    conv1d_layers=[],
-    dense_params={},
+    layers,
     dropout=0,
     # Data prep params
     post_window=WINDOW_POST_RECOVERY,
@@ -157,13 +155,8 @@ def build_and_train_model(
         with open(preprocess_path, "wb") as f:
             pickle.dump((preprocess, preprocessor), f)
 
-    model = get_lstm_model(
-        input_shape,
-        lstm_layers,
-        conv1d_layers=conv1d_layers,
-        dense_params=dense_params,
-        dropout=dropout,
-        plot_model_file=model_dir / "model.png",
+    model = get_model_from_layers(
+        layers, input_shape, dropout=dropout, plot_model_file=model_dir / "model.png"
     )
     model.summary()
 

@@ -6,9 +6,10 @@ containerUser: tf
 workingDirectory: /home/tf
 command: |
   python3 -m no_wander train \
-    --lstm '[
-      {"units": 64, "ic_params": { "dropout": 0.2, "batchnorm": true } },
-      {"units": 32, "ic_params": { "dropout": 0.2, "batchnorm": true } }
+    --layers '[
+      {"type": "LSTM", "units": 64, "ic_params": {"dropout": 0.2, "batchnorm": true}},
+      {"type": "LSTM", "units": 32, "ic_params": {"dropout": 0.2, "batchnorm": true}},
+      {"type": "Dense", "units": 32, "activation": "relu", "ic_params": {"dropout": 0.2, "batchnorm": true}}
     ]' \
     --sample-size 256 \
     --sequence-size 10 \
