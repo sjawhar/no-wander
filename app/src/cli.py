@@ -185,7 +185,19 @@ def train_setup_parser(parser):
                 "JSON array of layers with params. 'type' controls layer type.",
                 "'ic_params' controls IC layer after activation.",
                 "Include a 'pool' attribute of kwargs in a Conv1D layer to add a MaxPooling1D layer before the IC layer.",
-                "A single output Dense layer with sigmoid activation is automatically added after all specified layers.",
+                "A single layer controlled by '--output' is automatically added after all specified layers.",
+            ]
+        ),
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=type_json,
+        help=" ".join(
+            [
+                "JSON object overriding default output layer specification.",
+                "Default is a single-unit Dense layer with sigmoid activation.",
+                "Do NOT include 'type' or 'name' in the layer specification.",
             ]
         ),
     )

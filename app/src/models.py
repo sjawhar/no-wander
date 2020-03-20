@@ -52,6 +52,10 @@ def _get_ic_layers(name, dropout=0.2, batchnorm=True):
 
 
 def _get_layers(layer_type, name, ic_params={}, **kwargs):
+    if type(layer_type) is type:
+        layer_type = layer_type.__name__
+    logger.debug(f'Adding layer "{name}" - {layer_type}: {kwargs}')
+
     for arg in kwargs:
         if not arg.endswith("_regularizer"):
             continue
@@ -68,13 +72,10 @@ def _get_layers(layer_type, name, ic_params={}, **kwargs):
         )
         kwargs[arg] = reg
 
-    if type(layer_type) is type:
-        layer_type = layer_type.__name__
-    logger.debug(f'Adding layer "{name}" - {layer_type}: {kwargs}')
     layers = [
         deserialize({"class_name": layer_type, "config": {PARAM_NAME: name, **kwargs}})
     ]
-    if type(ic_params) is dict:
+    if ic_params:
         layers += _get_ic_layers(name, **ic_params)
     return layers
 
@@ -107,7 +108,7 @@ def get_layers(layer_type, name, is_last_of_type=False, **layer_params):
 
 
 def get_model_from_layers(
-    layers, input_shape, dropout=0, plot_model_file=None,
+    layers, input_shape, dropout=0, output={}, plot_model_file=None,
 ):
     is_input_layer = True
     if type(layers) is not list:
@@ -159,12 +160,10 @@ def get_model_from_layers(
             **layer_params,
         )
 
-    model_layers += _get_layers(
-        Dense,
-        "output",
-        ic_params=None,
-        **{PARAM_UNITS: 1, PARAM_ACTIVATION: "sigmoid"},
-    )
+    if output is not None:
+        output.setdefault(PARAM_UNITS, 1)
+        output.setdefault(PARAM_ACTIVATION, "sigmoid")
+        model_layers += _get_layers(Dense, "output", ic_params=None, **output)
 
     model = Sequential(model_layers)
     if plot_model_file is not None:

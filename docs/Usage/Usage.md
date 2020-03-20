@@ -98,9 +98,12 @@ Number of readings/timesteps per sample
 Number of samples per LSTM sequence
 
 **`-l, --layers JSON`**  
-JSON array of layers with params. `type` controls layer type. `ic_params` controls IC layer after activation. Include a `pool` attribute of kwargs in a Conv1D layer to add a MaxPooling1D layer before the IC layer. A single-unit Dense layer with sigmoid activation is automatically added after all specified layers.
+JSON array of layers with params. `type` controls layer type. `ic_params` controls IC layer after activation. Include a `pool` attribute of kwargs in a Conv1D layer to add a MaxPooling1D layer before the IC layer. A single layer controlled by `--output` is automatically added after all specified layers.
 
 #### Optional Arguments
+**`--o, --output JSON`**
+JSON object overriding default output layer specification. Default is a single-unit Dense layer with sigmoid activation. Do **NOT** include `type` or `name` in the layer specification.
+
 **`--pre-window FLOAT FLOAT`**  
 Start and end of pre-recovery window, in seconds. Should be negative numbers. Default is `-7 -1`
 
@@ -155,7 +158,7 @@ In general layers use their default values as specified in the Keras/TensorFlow 
 
 Each layer specification object can include one or more regularization parameters (e.g. `kernel_regularizer`). The value of these parameters should be either a string or a dict:
   * `"l1"` or `"l2"` will create the corresponding regularizer with default parameters.
-  * `{"l1": 0.1, "l2": 0.2}` will create an `l1_l2` regularizer with parameters `l1=0.1, l2=0.2`. You don't need to include both l1 and l2 values.
+  * `{"l1": 0.1, "l2": 0.2}` will create an `L1L2` regularizer with parameters `l1=0.1, l2=0.2`. You don't need to include both l1 and l2 values.
 
 #### Other Notes
 * If `--shuffle-samples` is not true, only samples belonging to contiguous sequences of length `--sequence-size` are used.

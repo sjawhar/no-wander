@@ -117,6 +117,7 @@ def build_and_train_model(
     sequence_size,
     layers,
     dropout=0,
+    output={},
     # Data prep params
     post_window=WINDOW_POST_RECOVERY,
     pre_window=WINDOW_PRE_RECOVERY,
@@ -156,7 +157,11 @@ def build_and_train_model(
             pickle.dump((preprocess, preprocessor), f)
 
     model = get_model_from_layers(
-        layers, input_shape, dropout=dropout, plot_model_file=model_dir / "model.png"
+        layers,
+        input_shape,
+        dropout=dropout,
+        output=output,
+        plot_model_file=model_dir / "model.png",
     )
     model.summary()
 
