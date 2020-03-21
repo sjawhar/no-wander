@@ -126,11 +126,16 @@ def process_setup_parser(parser):
         "-l", "--limit", type=int, help="Limit the number of processed files",
     )
     parser.add_argument(
+        "-s",
+        "--val-split",
+        type=float,
+        help="Percentage of data to reserve for validation",
+    )
+    parser.add_argument(
         "-t",
         "--test-split",
         type=float,
-        default=0.2,
-        help="Percentage of data to reserve for testing",
+        help="Percentage of data to reserve for final testing",
     )
     parser.add_argument(
         "-x",

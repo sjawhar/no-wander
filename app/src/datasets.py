@@ -124,20 +124,30 @@ def read_dataset(
 
 def save_epochs(filepath, epochs):
     logger.info(f"Saving epochs to {filepath}...")
-    with h5py.File(filepath, "w") as hf:
-        for epoch, recovery_ix, session in epochs:
-            data = epoch.drop(columns=[COL_MARKER_DEFAULT])
-            dset_name = "-".join([str(int(ts)) for ts in data.index[[0, -1]]])
-            date, chunk = session.split(".")[:2]
-            logger.debug(f"Saving epoch {dset_name} from date {date} chunk {chunk}...")
+    if type(epochs) is not dict:
+        epochs = {None: epochs}
 
-            dset = hf.create_dataset(
-                dset_name, data=data.to_numpy(), compression="gzip", compression_opts=9
-            )
-            dset.attrs["chunk"] = chunk
-            dset.attrs["columns"] = tuple(data.columns)
-            dset.attrs["date"] = date
-            dset.attrs["recovery"] = recovery_ix
-            # TODO: subject
-            dset.attrs["subject"] = 1
+    with h5py.File(filepath, "w") as hf:
+        for group_name, group_epochs in epochs:
+            grp = hf if not group_name else hf.create_group(group_name)
+            for epoch, recovery_ix, session in epochs:
+                data = epoch.drop(columns=[COL_MARKER_DEFAULT])
+                dset_name = "-".join([str(int(ts)) for ts in data.index[[0, -1]]])
+                date, chunk = session.split(".")[:2]
+                logger.debug(
+                    f"Saving epoch {dset_name} from date {date} chunk {chunk}..."
+                )
+
+                dset = grp.create_dataset(
+                    dset_name,
+                    data=data.to_numpy(),
+                    compression="gzip",
+                    compression_opts=9,
+                )
+                dset.attrs["chunk"] = chunk
+                dset.attrs["columns"] = tuple(data.columns)
+                dset.attrs["date"] = date
+                dset.attrs["recovery"] = recovery_ix
+                # TODO: subject
+                dset.attrs["subject"] = 1
     logger.info("Epochs saved!")

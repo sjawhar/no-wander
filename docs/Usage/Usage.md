@@ -71,8 +71,11 @@ Directory containing data files. Default is `data/input`
 **`-l, --limit INT`**  
 Limit the number of processed session chunks
 
+**`-s, --val-split FLOAT`**  
+Percentage of data to reserve for validation. Default is 0.2
+
 **`-t, --test-split FLOAT`**  
-Percentage of data to reserve for testing. Default is 0.2
+Percentage of data to reserve for final testing. Default is 0.2
 
 **`-x, --aux-channel STRING`**
 Channel name for Right Aux. Must be provided if Right Aux has data, otherwise channel is dropped.

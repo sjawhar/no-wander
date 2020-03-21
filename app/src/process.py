@@ -9,6 +9,7 @@ from .constants import (
     COL_RIGHT_AUX,
     DATASET_TEST,
     DATASET_TRAIN,
+    DATASET_VAL,
     DIR_EPOCHS,
     DIR_FAILED,
     DIR_PROCESSED,
@@ -160,14 +161,19 @@ def get_session_epochs(merged_df, session):
     return session_epochs
 
 
-def get_train_test_split(epochs, test_split):
+def split_epochs(epochs, val_split, test_split):
     num_epochs = len(epochs)
     test_ix = int((1 - test_split) * num_epochs)
+    val_ix = int((1 - test_split - val_split) * num_epochs)
     logger.info(
-        f"Splitting epochs into {test_ix} train and {num_epochs - test_ix} test..."
+        f"Splitting epochs: {val_ix} train/{test_ix - val_ix} val/{num_epochs - test_ix} test"
     )
-    shuffled = np.random.permutation(epochs)
-    return {DATASET_TRAIN: shuffled[:test_ix], DATASET_TEST: shuffled[test_ix:]}
+    shuffled = np.random.permutation(num_epochs)
+    return {
+        DATASET_TEST: epochs[shuffled[test_ix:]],
+        DATASET_TRAIN: epochs[shuffled[:val_ix]],
+        DATASET_VAL: epochs[shuffled[val_ix:test_ix]],
+    }
 
 
 def move_files(files, dest_dir):
@@ -177,9 +183,8 @@ def move_files(files, dest_dir):
         file.rename(dest_dir / file.name)
 
 
-# TODO: Add validation split
 def process_session_data(
-    raw_files, output_dir, limit=None, test_split=0.2, aux_channel=None
+    raw_files, output_dir, aux_channel=None, limit=None, test_split=0.2, val_split=0.2,
 ):
     if not len(raw_files):
         return
@@ -220,7 +225,9 @@ def process_session_data(
     logger.info(f"Collected {len(epochs)} epochs across {processed_chunks} chunks!")
     try:
         dataset_name = "-".join([str(int(ts)) for ts in ts_range])
-        for split, epochs in get_train_test_split(epochs, test_split).items():
+        splits = split_epochs(epochs, val_split, test_split)
+        epochs_test = splits.pop(DATASET_TEST)
+        for epochs, split in [(splits, DATASET_TRAIN), (epochs_test, DATASET_TEST)]:
             save_epochs(output_dir / DIR_EPOCHS / f"{dataset_name}-{split}.h5", epochs)
         move_files(processed_files, output_dir / DIR_PROCESSED)
     except Exception as e:
