@@ -207,14 +207,32 @@ def normalize_data(X_raw):
 
     scaler = RobustScaler()
     X = scaler.fit_transform(X_raw.reshape(-1, X_raw.shape[-1])).reshape(X_raw.shape)
-    return X, scaler
+    return X, {"scaler": scaler}
 
 
-def preprocess_data(X_raw, features, preprocess):
+def preprocess_data_train(X_raw, preprocess, features_raw):
+    preprocessor = {"preprocess": preprocess, "features_raw": features_raw}
+
     if preprocess == PREPROCESS_EXTRACT_EEG:
-        return (*extract_eeg_features(X_raw, features), True)
+        X, extractor, features = extract_eeg_features(X_raw, features_raw)
+        return X, {**preprocessor, **extractor}, features, True
     elif preprocess == PREPROCESS_NONE:
-        return X_raw, None, features, False
+        return X_raw, preprocessor, features_raw, False
     elif preprocess == PREPROCESS_NORMALIZE:
-        return (*normalize_data(X_raw), features, False)
+        X, scaler = normalize_data(X_raw)
+        return X, {**preprocessor, **scaler}, features_raw, False
+    raise ValueError(f"Unknown preprocessing type {preprocess}")
+
+
+def preprocess_data_test(X_raw, preprocessor):
+    preprocess = preprocessor["preprocess"]
+
+    if preprocess == PREPROCESS_EXTRACT_EEG:
+        X, _, _ = extract_eeg_features(X_raw, preprocessor["features_raw"])
+        return X
+    elif preprocess == PREPROCESS_NONE:
+        return X_raw
+    elif preprocess == PREPROCESS_NORMALIZE:
+        scaler = preprocessor["scaler"]
+        return scaler.transform(X_raw.reshape(-1, X_raw.shape[-1])).reshape(X_raw.shape)
     raise ValueError(f"Unknown preprocessing type {preprocess}")

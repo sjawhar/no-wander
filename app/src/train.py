@@ -4,7 +4,7 @@ import pickle
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from .datasets import read_dataset
-from .features import preprocess_data
+from .features import preprocess_data_test, preprocess_data_train
 from .models import compile_model, fit_model, get_model_from_layers
 from .constants import PREPROCESS_NONE
 
@@ -57,36 +57,6 @@ def get_sequences(samples, labels, input_shape, shuffle_samples):
     return np.nan_to_num(X, 0), Y
 
 
-def train_model(
-    model,
-    X,
-    Y,
-    test_split=0,
-    learning_rate=LEARNING_RATE,
-    beta_one=BETA_ONE,
-    beta_two=BETA_TWO,
-    decay=DECAY,
-    **kwargs,
-):
-    validation_data = None
-    if test_split:
-        logger.info(f"Splitting {int(test_split * 100)}% of data for validation")
-        X, X_test, Y, Y_test = train_test_split(
-            X, Y, test_size=test_split, random_state=RANDOM_SEED
-        )
-        validation_data = (X_test, Y_test)
-
-    compile_model(model, learning_rate, beta_one, beta_two, decay)
-
-    try:
-        history = fit_model(model, X, Y, validation_data=validation_data, **kwargs)
-    except KeyboardInterrupt:
-        logger.info("\nTraining interrupted!")
-        history = model.history
-
-    return history
-
-
 def plot_training_history(history, model_dir):
     import matplotlib.pyplot as plt
 
@@ -109,6 +79,48 @@ def plot_training_history(history, model_dir):
         plt.close()
 
 
+def train_model(
+    model,
+    model_dir,
+    X_train,
+    Y_train,
+    X_val,
+    Y_val,
+    input_shape,
+    shuffle_samples=False,
+    # Optimizer params
+    learning_rate=LEARNING_RATE,
+    beta_one=BETA_ONE,
+    beta_two=BETA_TWO,
+    decay=DECAY,
+    # Logging params
+    checkpoint=True,
+    gradient_metrics=False,
+    tensorboard=False,
+    **kwargs,
+):
+    X, Y = get_sequences(X_train, Y_train, input_shape, shuffle_samples)
+    compile_model(model, learning_rate, beta_one, beta_two, decay)
+
+    try:
+        history = fit_model(
+            model,
+            X,
+            Y,
+            checkpoint_path=model_dir / "model_best" if checkpoint else None,
+            gradient_metrics=gradient_metrics,
+            tensorboard_path=model_dir / "tensorboard" if tensorboard else None,
+            validation_data=get_sequences(X_val, Y_val, input_shape, False),
+            **kwargs,
+        )
+    except KeyboardInterrupt:
+        logger.info("\nTraining interrupted!")
+        history = model.history
+
+    plot_training_history(history, model_dir)
+    return history
+
+
 def build_and_train_model(
     data_file,
     model_dir,
@@ -123,10 +135,6 @@ def build_and_train_model(
     pre_window=WINDOW_PRE_RECOVERY,
     preprocess=PREPROCESS_NONE,
     shuffle_samples=False,
-    # Logging params
-    checkpoint=True,
-    tensorboard=False,
-    gradient_metrics=False,
     **train_kwargs,
 ):
     model_dir = Path(model_dir).resolve()
@@ -134,27 +142,28 @@ def build_and_train_model(
         model_dir.mkdir()
     logger.debug(f"Model files will be saved to {model_dir}")
 
-    samples, labels, features_raw = read_dataset(
+    samples_train, labels_train, samples_val, labels_val, features_raw = read_dataset(
         data_file,
         sample_size,
         1 if shuffle_samples else sequence_size,
         pre_window,
         post_window,
     )
-    logger.info(f"{len(samples)} samples in training set")
+    logger.info(f"{len(samples_train)} samples in training set")
     logger.info(f"Raw features: {', '.join(features_raw)}")
 
-    samples, preprocessor, features, is_flattened = preprocess_data(
-        samples, features_raw, preprocess
+    samples_train, preprocessor, features, is_flattened = preprocess_data_train(
+        samples_train, preprocess, features_raw
     )
     input_shape = (sequence_size, len(features) * (1 if is_flattened else sample_size))
     logger.info(f"Preprocessed features: {', '.join(features)}")
     logger.info(f"Input shape: {input_shape}")
+
     if preprocessor is not None:
         preprocess_path = str(model_dir / f"preprocess.pickle")
         logger.info(f"Saving preprocessing details to {preprocess_path}...")
         with open(preprocess_path, "wb") as f:
-            pickle.dump((preprocess, preprocessor), f)
+            pickle.dump(preprocessor, f)
 
     model = get_model_from_layers(
         layers,
@@ -165,18 +174,19 @@ def build_and_train_model(
     )
     model.summary()
 
-    if train_kwargs.get("epochs"):
-        X, Y = get_sequences(samples, labels, input_shape, shuffle_samples)
-        history = train_model(
+    if train_kwargs.get("epochs", 0):
+        samples_val = preprocess_data_test(samples_val, preprocessor)
+        train_model(
             model,
-            X,
-            Y,
-            checkpoint_path=model_dir / "model_best" if checkpoint else None,
-            tensorboard_path=model_dir / "tensorboard" if tensorboard else None,
-            gradient_metrics=gradient_metrics,
+            model_dir,
+            samples_train,
+            labels_train,
+            samples_val,
+            labels_val,
+            input_shape,
+            shuffle_samples=shuffle_samples,
             **train_kwargs,
         )
-        plot_training_history(history, model_dir)
 
     model_path = str(model_dir / "model_final")
     logger.info(f"Saving model to {model_path}...")

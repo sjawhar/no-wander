@@ -4,6 +4,10 @@ COL_MARKER_PREFIX = "Marker"
 COL_MARKER_DEFAULT = f"{COL_MARKER_PREFIX}0"
 COL_RIGHT_AUX = "EEG_Right AUX"
 
+DATASET_TEST = "test"
+DATASET_TRAIN = "train"
+DATASET_VAL = "val"
+
 DIR_DATA_DEFAULT = Path.cwd() / "data"
 DIR_EPOCHS = "epochs"
 DIR_FAILED = "failed"

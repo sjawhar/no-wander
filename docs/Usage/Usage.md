@@ -131,9 +131,6 @@ Dropout rate for input. Default is 0
 **`--shuffle-samples`**  
 Shuffle samples before constructing LSTM sequences
 
-**`-t, --test-split FLOAT`**  
-Ratio of data in data_file to use for validation. Default is 0
-
 **`-e, --epochs INT`**  
 Number of training epochs. Default is 1
 

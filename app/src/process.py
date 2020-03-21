@@ -7,6 +7,8 @@ from .constants import (
     COL_MARKER_DEFAULT,
     COL_MARKER_PREFIX,
     COL_RIGHT_AUX,
+    DATASET_TEST,
+    DATASET_TRAIN,
     DIR_EPOCHS,
     DIR_FAILED,
     DIR_PROCESSED,
@@ -165,7 +167,7 @@ def get_train_test_split(epochs, test_split):
         f"Splitting epochs into {test_ix} train and {num_epochs - test_ix} test..."
     )
     shuffled = np.random.permutation(epochs)
-    return {"train": shuffled[:test_ix], "test": shuffled[test_ix:]}
+    return {DATASET_TRAIN: shuffled[:test_ix], DATASET_TEST: shuffled[test_ix:]}
 
 
 def move_files(files, dest_dir):
@@ -175,6 +177,7 @@ def move_files(files, dest_dir):
         file.rename(dest_dir / file.name)
 
 
+# TODO: Add validation split
 def process_session_data(
     raw_files, output_dir, limit=None, test_split=0.2, aux_channel=None
 ):

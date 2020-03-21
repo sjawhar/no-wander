@@ -13,10 +13,11 @@ command: |
     ]' \
     --sample-size 256 \
     --sequence-size 10 \
-    --epochs 1000 \
     --preprocess extract-eeg \
     --shuffle-samples \
-    --test-split 0.25 \
+    --epochs 1000 \
+    --gradient-metrics \
     /storage/no-wander/data/1572178629-1579608303-train.h5 \
     /artifacts
 modelType: Tensorflow
+modelPath: /artifacts/model_best

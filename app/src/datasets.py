@@ -1,28 +1,43 @@
 import h5py
 import logging
 import numpy as np
-from .constants import COL_MARKER_DEFAULT, SAMPLE_RATE
+from .constants import (
+    COL_MARKER_DEFAULT,
+    DATASET_TEST,
+    DATASET_TRAIN,
+    DATASET_VAL,
+    SAMPLE_RATE,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def parse_dataset(filepath):
+def parse_dataset(filepath, train_set=DATASET_TRAIN, test_set=DATASET_TEST):
+    datasets = []
     features = {}
 
     with h5py.File(filepath, "r") as hf:
-        data = [None] * len(hf)
-        i = 0
-        for dset in hf.values():
-            columns = dset.attrs["columns"]
-            for col in columns:
-                if col not in features:
-                    features[col] = len(features)
-            column_numbers = [features[col] for col in columns]
+        for set_type in [train_set, test_set]:
+            if set_type is None:
+                datasets.append(None)
+                continue
 
-            data[i] = dset[:], dset.attrs["recovery"], column_numbers
-            i += 1
+            set_group = hf[set_type]
+            data = [None] * len(set_group)
+            i = 0
+            for dset in set_group.values():
+                columns = dset.attrs["columns"]
+                for col in columns:
+                    if col not in features:
+                        features[col] = len(features)
+                column_numbers = [features[col] for col in columns]
 
-    return data, [feat for (feat, _) in sorted(features.items(), key=lambda x: x[1])]
+                data[i] = dset[:], dset.attrs["recovery"], column_numbers
+                i += 1
+            datasets.append(data)
+
+    features = [feat for (feat, _) in sorted(features.items(), key=lambda x: x[1])]
+    return (*datasets, features)
 
 
 def get_window_samples(data, sample_size, consecutive_samples, window):
@@ -92,15 +107,19 @@ def read_dataset(
     sample_rate=SAMPLE_RATE,
 ):
     logger.info(f"Reading datasets from {filepath}...")
-    data, features = parse_dataset(filepath)
     pre_window = tuple(int(ix * sample_rate) for ix in pre_window)
     post_window = tuple(int(ix * sample_rate) for ix in post_window)
-    samples, num_samples = get_samples(
-        data, sample_size, consecutive_samples, pre_window, post_window
-    )
-    X, Y = samples_to_tensors(samples, (num_samples, sample_size, len(features)))
-    logger.debug(f"Data shape {X.shape}")
-    return X, Y, features
+
+    data_train, data_val, features = parse_dataset(filepath, test_set=DATASET_VAL)
+    datasets = []
+    for data, dataset in [(data_train, DATASET_TRAIN), (data_val, DATASET_VAL)]:
+        samples, num_samples = get_samples(
+            data, sample_size, consecutive_samples, pre_window, post_window
+        )
+        X, Y = samples_to_tensors(samples, (num_samples, sample_size, len(features)))
+        logger.debug(f"{dataset} data shape {X.shape}")
+        datasets += [X, Y]
+    return (*datasets, features)
 
 
 def save_epochs(filepath, epochs):

@@ -241,13 +241,6 @@ def train_setup_parser(parser):
         help="Shuffle samples before constructing LSTM sequences",
     )
     parser.add_argument(
-        "-t",
-        "--test-split",
-        type=float,
-        default=0,
-        help="Percentage of data in data_file to use for validation",
-    )
-    parser.add_argument(
         "-e", "--epochs", type=int, default=1, help="Number of training epochs"
     )
     parser.add_argument("-b", "--batch-size", type=int, help="Training batch size")
