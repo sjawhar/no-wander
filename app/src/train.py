@@ -61,7 +61,10 @@ def plot_training_history(history, model_dir):
     import matplotlib.pyplot as plt
 
     for metric in ["accuracy", "loss"]:
-        plt.plot(history.history[metric])
+        metric_value = history.history.get(metric, None)
+        if not metric_value:
+            continue
+        plt.plot(metric_value)
         plt.title(f"Model {metric}")
         plt.ylabel(metric)
         plt.xlabel("epoch")
@@ -99,8 +102,11 @@ def train_model(
     tensorboard=False,
     **kwargs,
 ):
-    X, Y = get_sequences(X_train, Y_train, input_shape, shuffle_samples)
     compile_model(model, learning_rate, beta_one, beta_two, decay)
+
+    X, Y = get_sequences(X_train, Y_train, input_shape, shuffle_samples)
+    validation_data = get_sequences(X_val, Y_val, input_shape, False)
+    logger.info(f"Train on {len(X)} samples, validate on {len(validation_data[0])} samples")
 
     try:
         history = fit_model(
@@ -110,7 +116,7 @@ def train_model(
             checkpoint_path=model_dir / "model_best" if checkpoint else None,
             gradient_metrics=gradient_metrics,
             tensorboard_path=model_dir / "tensorboard" if tensorboard else None,
-            validation_data=get_sequences(X_val, Y_val, input_shape, False),
+            validation_data=validation_data,
             **kwargs,
         )
     except KeyboardInterrupt:
