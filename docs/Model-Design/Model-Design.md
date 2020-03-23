@@ -8,11 +8,17 @@ Samples in the uncertainty window immediately preceding the recovery are discard
 
 The above example illustrates a single epoch with a 4-second distraction window, 2-second focus window, 1-second uncertainty window, and 0.5 second sample size. These parameters result in 8 distraction samples and 4 focus samples for each epoch. At a recording frequency of 256Hz for EEG, each 0.5-second sample contains 128 x n datapoints: 128 datapoints from each of the n channels in the EEG stream.
 
-This project will explore the effectiveness of multiple model designs. Please use the sidebar to the right to learn more about a particular design. **Please Note**: These models are still a work in progress, and details are subject to change.
+This project explores the effectiveness of multiple model designs. Given the use case of this project (detecting distraction in a subject before the subject does), focus is given to architectures that support efficient, real-time inference. Please use the sidebar to the right to learn more about a particular design. **Please Note**: These models are still a work in progress, and details are subject to change.
 
 ## Methodology
-TODO
-* Train/test split + Validation holdout
-* Stratified cross-validation
-* **Realtime prediction**
-* Tools (Python, Keras, TensorFlow)
+To train and test our candidate models, we first extract all epochs, shuffle the order, then reserve 20% for model validation during development and 20% for final testing. The prepared datasets can be found as HDF5 files on [Amazon S3](https://no-wander-datasets.s3.amazonaws.com/). The "train" datafile contains two groups, "train" and "val", which respectively contain the training and validation epochs. The "test" datafile contains the testing datasets under the root group.
+
+The software for this project is developed in Python, a standard for machine learning (ML). We also make use of ML frameworks such as Keras and TensorFlow as appropriate.
+
+## Training Experiments
+A history of ML model training experiments conducted for this project can be viewed in [this spreadsheet](https://docs.google.com/spreadsheets/d/1i03Li05xmXismmcXjPu_mv1lNQf7RambY2m5mYs2GpY/edit?usp=sharing). The first column in the sheet contains links to the experiments on Paperspace, which are publicly viewable. Some notes on navigating the Paperspace UI:
+* The "Logs" tab contains the command used to create and train the model.
+* Expanding the "Job Metrics (User-defined)" panel at the bottom of the "Metrics" tab will display charts showing the loss and accuracy of the model throughout training.
+* The "Artifacts" tab contains an image of the model architecture as well as saved copies of the trained model.
+* Some of the above features are missing for earlier jobs, as we were still improving our sharing protocols.
+

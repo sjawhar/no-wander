@@ -1,4 +1,4 @@
-name: lstm-1l-64-normalize
+name: lstm-3l-u64-u64-u64-noic-regrl2-s16q48-verify
 projectId: prmqc6jjx
 machineType: GPU+
 container: sjawhar/no-wander:train
@@ -7,11 +7,13 @@ workingDirectory: /home/tf
 command: |
   python3 -m no_wander train \
     --layers '[
-      {"type": "LSTM", "units": 64, "ic_params": {"dropout": 0.2, "batchnorm": true}},
+      {"type": "LSTM", "units": 64, "recurrent_regularizer": "l2", "return_sequences": true, "ic_params": null},
+      {"type": "LSTM", "units": 64, "recurrent_regularizer": "l2", "return_sequences": true, "ic_params": null},
+      {"type": "LSTM", "units": 64, "recurrent_regularizer": "l2", "ic_params": {"dropout": 0.2, "batchnorm": true}},
       {"type": "Dense", "units": 32, "activation": "relu", "ic_params": {"dropout": 0.2, "batchnorm": true}}
     ]' \
-    --sample-size 128 \
-    --sequence-size 6 \
+    --sample-size 16 \
+    --sequence-size 48 \
     --preprocess normalize \
     --epochs 1000 \
     --gradient-metrics \

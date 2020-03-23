@@ -1,4 +1,4 @@
-name: lstm-2l-64-32-features
+name: lstm-1l-256-conv1d-f64k5-s64q12-verify
 projectId: prmqc6jjx
 machineType: GPU+
 container: sjawhar/no-wander:train
@@ -7,14 +7,13 @@ workingDirectory: /home/tf
 command: |
   python3 -m no_wander train \
     --layers '[
-      {"type": "LSTM", "units": 64, "ic_params": {"dropout": 0.2, "batchnorm": true}},
-      {"type": "LSTM", "units": 32, "ic_params": {"dropout": 0.2, "batchnorm": true}},
+      {"type": "Conv1D", "filters": 64, "kernel_size": 5, "activation": "relu", "ic_params": {"dropout": 0.2, "batchnorm": true}},
+      {"type": "LSTM", "units": 256, "ic_params": {"dropout": 0.2, "batchnorm": true}},
       {"type": "Dense", "units": 32, "activation": "relu", "ic_params": {"dropout": 0.2, "batchnorm": true}}
     ]' \
-    --sample-size 256 \
-    --sequence-size 10 \
-    --preprocess extract-eeg \
-    --shuffle-samples \
+    --sample-size 64 \
+    --sequence-size 12 \
+    --preprocess normalize \
     --epochs 1000 \
     --gradient-metrics \
     /storage/no-wander/data/1572178629-1584963221-train.h5 \
