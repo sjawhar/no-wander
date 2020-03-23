@@ -128,9 +128,9 @@ def save_epochs(filepath, epochs):
         epochs = {None: epochs}
 
     with h5py.File(filepath, "w") as hf:
-        for group_name, group_epochs in epochs:
+        for group_name, group_epochs in epochs.items():
             grp = hf if not group_name else hf.create_group(group_name)
-            for epoch, recovery_ix, session in epochs:
+            for epoch, recovery_ix, session in group_epochs:
                 data = epoch.drop(columns=[COL_MARKER_DEFAULT])
                 dset_name = "-".join([str(int(ts)) for ts in data.index[[0, -1]]])
                 date, chunk = session.split(".")[:2]

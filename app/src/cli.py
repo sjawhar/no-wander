@@ -221,8 +221,6 @@ def train_setup_parser(parser):
     parser.add_argument(
         "-p",
         "--preprocess",
-        action="store",
-        default=PREPROCESS_NONE,
         choices=[PREPROCESS_EXTRACT_EEG, PREPROCESS_NONE, PREPROCESS_NORMALIZE],
         help="Type of preprocessing to perform on input data",
     )

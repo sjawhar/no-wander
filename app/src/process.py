@@ -168,12 +168,12 @@ def split_epochs(epochs, val_split, test_split):
     logger.info(
         f"Splitting epochs: {val_ix} train/{test_ix - val_ix} val/{num_epochs - test_ix} test"
     )
-    shuffled = np.random.permutation(num_epochs)
-    return {
-        DATASET_TEST: epochs[shuffled[test_ix:]],
-        DATASET_TRAIN: epochs[shuffled[:val_ix]],
-        DATASET_VAL: epochs[shuffled[val_ix:test_ix]],
-    }
+    shuffled = np.random.permutation(epochs)
+    return (
+        shuffled[:val_ix],
+        shuffled[val_ix:test_ix],
+        shuffled[test_ix:],
+    )
 
 
 def move_files(files, dest_dir):
@@ -225,10 +225,14 @@ def process_session_data(
     logger.info(f"Collected {len(epochs)} epochs across {processed_chunks} chunks!")
     try:
         dataset_name = "-".join([str(int(ts)) for ts in ts_range])
-        splits = split_epochs(epochs, val_split, test_split)
-        epochs_test = splits.pop(DATASET_TEST)
-        for epochs, split in [(splits, DATASET_TRAIN), (epochs_test, DATASET_TEST)]:
-            save_epochs(output_dir / DIR_EPOCHS / f"{dataset_name}-{split}.h5", epochs)
+        epochs_train, epochs_val, epochs_test = split_epochs(
+            epochs, val_split, test_split
+        )
+        for dataset, split in [
+            ({DATASET_TRAIN: epochs_train, DATASET_VAL: epochs_val}, DATASET_TRAIN),
+            (epochs_test, DATASET_TEST),
+        ]:
+            save_epochs(output_dir / DIR_EPOCHS / f"{dataset_name}-{split}.h5", dataset)
         move_files(processed_files, output_dir / DIR_PROCESSED)
     except Exception as e:
         logger.exception(e)
