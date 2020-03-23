@@ -1,3 +1,4 @@
-app/.ipynb_checkpoints
 app/__pycache__
-app/data
+app/.ipynb_checkpoints
+app/.pytest_cache
+data
