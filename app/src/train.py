@@ -106,14 +106,16 @@ def train_model(
 
     X, Y = get_sequences(X_train, Y_train, input_shape, shuffle_samples)
     validation_data = get_sequences(X_val, Y_val, input_shape, False)
-    logger.info(f"Train on {len(X)} samples, validate on {len(validation_data[0])} samples")
+    logger.info(
+        f"Train on {len(X)} samples, validate on {len(validation_data[0])} samples"
+    )
 
     try:
         history = fit_model(
             model,
             X,
             Y,
-            checkpoint_path=model_dir / "model_best" if checkpoint else None,
+            checkpoint_path=model_dir / "model_best.h5" if checkpoint else None,
             gradient_metrics=gradient_metrics,
             tensorboard_path=model_dir / "tensorboard" if tensorboard else None,
             validation_data=validation_data,
@@ -194,7 +196,7 @@ def build_and_train_model(
             **train_kwargs,
         )
 
-    model_path = str(model_dir / "model_final")
+    model_path = str(model_dir / "model_final.h5")
     logger.info(f"Saving model to {model_path}...")
     model.save(model_path)
     logger.info("Done!")

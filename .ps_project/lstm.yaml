@@ -1,4 +1,4 @@
-name: lstm-3l-u64-u64-u64-noic-regrl2-s16q48-verify
+name: lstm
 projectId: prmqc6jjx
 machineType: GPU+
 container: sjawhar/no-wander:train
@@ -15,9 +15,8 @@ command: |
     --sample-size 16 \
     --sequence-size 48 \
     --preprocess normalize \
-    --epochs 1000 \
+    --epochs 250 \
     --gradient-metrics \
     /storage/no-wander/data/1572178629-1584963221-train.h5 \
     /artifacts
 modelType: Tensorflow
-modelPath: /artifacts/model_best

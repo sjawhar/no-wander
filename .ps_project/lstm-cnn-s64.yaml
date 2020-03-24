@@ -1,4 +1,4 @@
-name: lstm-1l-256-conv1d-f64k5-s64q12-verify
+name: lstm-cnn-s64
 projectId: prmqc6jjx
 machineType: GPU+
 container: sjawhar/no-wander:train
@@ -14,9 +14,8 @@ command: |
     --sample-size 64 \
     --sequence-size 12 \
     --preprocess normalize \
-    --epochs 1000 \
+    --epochs 250 \
     --gradient-metrics \
     /storage/no-wander/data/1572178629-1584963221-train.h5 \
     /artifacts
 modelType: Tensorflow
-modelPath: /artifacts/model_best
