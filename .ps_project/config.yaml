@@ -1,12 +1,17 @@
 version: 2
 workflows:
-  lstm-1l-64-normalize:
+  lstm:
     steps:
-      - name: lstm-1l-64-normalize
+      - name: lstm
         command: experiment.run_single_node
-        paramsFile: .ps_project/lstm-1l-64-normalize.yaml
-  lstm-2l-32-64-features:
+        paramsFile: .ps_project/lstm.yaml
+  lstm-cnn-s1:
     steps:
-      - name: lstm-2l-32-64-features
+      - name: lstm-cnn-s1
         command: experiment.run_single_node
-        paramsFile: .ps_project/lstm-2l-32-64-features.yaml
+        paramsFile: .ps_project/lstm-cnn-s1.yaml
+  lstm-cnn-s64:
+    steps:
+      - name: lstm-cnn-s64
+        command: experiment.run_single_node
+        paramsFile: .ps_project/lstm-cnn-s64.yaml

@@ -1,0 +1,22 @@
+name: lstm-cnn-s1
+projectId: prmqc6jjx
+machineType: GPU+
+container: sjawhar/no-wander:train
+containerUser: tf
+workingDirectory: /home/tf
+command: |
+  python3 -m no_wander train \
+    --layers '[
+      {"type": "Conv1D", "filters": 64, "kernel_size": 21, "strides": 5, "activation": "relu", "ic_params": null},
+      {"type": "Conv1D", "filters": 64, "kernel_size": 21, "strides": 1, "activation": "relu", "ic_params": {"dropout": 0.2, "batchnorm": true}},
+      {"type": "LSTM", "units": 128, "ic_params": {"dropout": 0.2, "batchnorm": true}},
+      {"type": "Dense", "units": 32, "activation": "relu", "ic_params": {"dropout": 0.2, "batchnorm": true}}
+    ]' \
+    --sample-size 1 \
+    --sequence-size 768 \
+    --preprocess normalize \
+    --epochs 250 \
+    --gradient-metrics \
+    /storage/no-wander/data/1572178629-1584963221-train.h5 \
+    /artifacts
+modelType: Tensorflow

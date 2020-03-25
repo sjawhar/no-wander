@@ -126,11 +126,16 @@ def process_setup_parser(parser):
         "-l", "--limit", type=int, help="Limit the number of processed files",
     )
     parser.add_argument(
+        "-s",
+        "--val-split",
+        type=float,
+        help="Percentage of data to reserve for validation",
+    )
+    parser.add_argument(
         "-t",
         "--test-split",
         type=float,
-        default=0.2,
-        help="Percentage of data to reserve for testing",
+        help="Percentage of data to reserve for final testing",
     )
     parser.add_argument(
         "-x",
@@ -216,8 +221,6 @@ def train_setup_parser(parser):
     parser.add_argument(
         "-p",
         "--preprocess",
-        action="store",
-        default=PREPROCESS_NONE,
         choices=[PREPROCESS_EXTRACT_EEG, PREPROCESS_NONE, PREPROCESS_NORMALIZE],
         help="Type of preprocessing to perform on input data",
     )
@@ -239,13 +242,6 @@ def train_setup_parser(parser):
         action="store_true",
         default=None,
         help="Shuffle samples before constructing LSTM sequences",
-    )
-    parser.add_argument(
-        "-t",
-        "--test-split",
-        type=float,
-        default=0,
-        help="Percentage of data in data_file to use for validation",
     )
     parser.add_argument(
         "-e", "--epochs", type=int, default=1, help="Number of training epochs"

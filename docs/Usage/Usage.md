@@ -71,8 +71,11 @@ Directory containing data files. Default is `data/input`
 **`-l, --limit INT`**  
 Limit the number of processed session chunks
 
+**`-s, --val-split FLOAT`**  
+Percentage of data to reserve for validation. Default is 0.2
+
 **`-t, --test-split FLOAT`**  
-Percentage of data to reserve for testing. Default is 0.2
+Percentage of data to reserve for final testing. Default is 0.2
 
 **`-x, --aux-channel STRING`**
 Channel name for Right Aux. Must be provided if Right Aux has data, otherwise channel is dropped.
@@ -130,9 +133,6 @@ Dropout rate for input. Default is 0
 
 **`--shuffle-samples`**  
 Shuffle samples before constructing LSTM sequences
-
-**`-t, --test-split FLOAT`**  
-Ratio of data in data_file to use for validation. Default is 0
 
 **`-e, --epochs INT`**  
 Number of training epochs. Default is 1
