@@ -5,20 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Remote Attach (muselsl)",
-            "type": "python",
-            "request": "attach",
-            "port": 3000,
-            "host": "localhost",
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}/app/src",
-                    "remoteRoot": "/home/muselsl/no_wander"
-                }
-            ]
-        },
-        {
-          "name": "Python: Remote Attach (tf)",
+          "name": "Python: Remote Attach",
           "type": "python",
           "request": "attach",
           "port": 3000,

@@ -4,13 +4,13 @@ services:
 
   record:
     build: .
-    image: sjawhar/no-wander
+    image: sjawhar/no-wander:record
     container_name: no-wander-record
     environment:
       DISPLAY:
       XAUTHORITY: /tmp/.docker.xauth
     volumes:
-      - ./app/src:/home/muselsl/no_wander
+      - ./app/src:/opt/no_wander
       - ./data:/home/muselsl/data
       - /tmp/.docker.xauth:/tmp/.docker.xauth
       - /tmp/.X11-unix:/tmp/.X11-unix
@@ -23,10 +23,10 @@ services:
 
   process:
     build: .
-    image: sjawhar/no-wander
+    image: sjawhar/no-wander:record
     container_name: no-wander-process
     volumes:
-      - ./app/src:/home/muselsl/no_wander
+      - ./app/src:/opt/no_wander
       - ./data:/home/muselsl/data
     entrypoint: [python3, -m, no_wander, process]
 

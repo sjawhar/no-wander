@@ -5,17 +5,17 @@ RUN DEV_PACKAGES=" \
  " \
  && apt-get update \
  && apt-get install -y \
-        graphviz \
+        graphviz=2.40.1-2 \
  && apt-get install -y $DEV_PACKAGES \
  && pip install --no-cache-dir \
         git+https://github.com/aestrivex/bctpy@0.5.1 \
-        graphviz \
-        jupyterlab \
-        mne \
-        pandas \
-        pydot \
-        PyWavelets \
-        sklearn \
+        graphviz==0.13.2 \
+        jupyterlab==2.0.1 \
+        mne==0.19.2 \
+        pandas==1.0.3 \
+        pydot==1.4.1 \
+        PyWavelets==1.1.1 \
+        scikit-learn==0.22.2.post1 \
  && apt-get remove --purge -y $DEV_PACKAGES \
  && rm -rf /var/lib/apt/lists/*
 
