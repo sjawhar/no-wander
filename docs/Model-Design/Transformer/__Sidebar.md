@@ -1,6 +1,6 @@
 [**< Back**](Model-Design)  
-**Featurization**  
-{{SIDEBAR_POPULATE}}  
+[Featurization](Featurization)  
 [LSTM](LSTM)  
 [Reinforced Attention](Reinforced-Attention)  
-[Transformer](Transformer)  
+**Transformer**  
+{{SIDEBAR_POPULATE}}  

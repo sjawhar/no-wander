@@ -3,3 +3,4 @@
 [LSTM](LSTM)  
 **Reinforced Attention**  
 {{SIDEBAR_POPULATE}}  
+[Transformer](Transformer)  
