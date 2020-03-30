@@ -8,10 +8,11 @@ from tensorflow.keras.layers import (
     Dense,
     deserialize,
     Dropout,
+    Input,
     LSTM,
     MaxPooling1D,
 )
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import plot_model
 
@@ -40,18 +41,35 @@ class GradientMetricsCallback(Callback):
         print("")
 
 
-def get_ic_layer(name, dropout=0.2, batchnorm=True):
-    layers = []
+def count_layers(layers):
+    last_layers = {}
+    layer_count = []
+    num_layers = len(layers)
+    for i in range(num_layers):
+        layer_type = layers[i].get("type")
+        last_layer_index, last_layer_num = last_layers.get(layer_type, (None, 0))
+
+        layer_num = last_layer_num + 1
+        layer_count.append([layer_num, True])
+        if last_layer_index is not None:
+            layer_count[last_layer_index][1] = False
+
+        last_layers[layer_type] = (i, layer_num)
+
+    return layer_count
+
+
+def wrap_layer_with_ic(layer, name, dropout=0.2, batchnorm=True):
     if batchnorm:
         logger.debug(f'Adding layer "{name}" - BatchNorm')
-        layers.append(BatchNormalization(name=f"{name}_bn"))
+        layer = BatchNormalization(name=f"{name}_bn")(layer)
     if dropout:
         logger.debug(f'Adding layer "{name}" - Dropout: {dropout}')
-        layers.append(Dropout(dropout, name=f"{name}_dropout"))
-    return layers
+        layer = Dropout(dropout, name=f"{name}_dropout")(layer)
+    return layer
 
 
-def get_wrapped_layer(layer_type, name, ic_params={}, **kwargs):
+def get_wrapped_layer(input_layer, layer_type, name, ic_params={}, **kwargs):
     if type(layer_type) is type:
         layer_type = layer_type.__name__
     logger.debug(f'Adding layer "{name}" - {layer_type}: {kwargs}')
@@ -72,79 +90,42 @@ def get_wrapped_layer(layer_type, name, ic_params={}, **kwargs):
         )
         kwargs[arg] = reg
 
-    layers = [
-        deserialize({"class_name": layer_type, "config": {PARAM_NAME: name, **kwargs}})
-    ]
+    layer = deserialize(
+        {"class_name": layer_type, "config": {PARAM_NAME: name, **kwargs}}
+    )(input_layer)
     if ic_params:
-        layers += get_ic_layer(name, **ic_params)
-    return layers
+        layer = wrap_layer_with_ic(layer, name, **ic_params)
+    return layer
 
 
-def get_conv1d_layer(name, ic_params={}, pool=None, **kwargs):
+def get_conv1d_layer(input_layer, name, ic_params={}, pool=None, **kwargs):
     kwargs.setdefault(PARAM_ACTIVATION, "relu")
-    layers = get_wrapped_layer(Conv1D, name, ic_params=ic_params, **kwargs)
-    if not pool:
-        return layers
+    conv_layer = get_wrapped_layer(input_layer, Conv1D, name, ic_params=None, **kwargs)
 
-    if pool is True:
-        pool = {}
-    elif type(pool) is int:
-        pool = {PARAM_POOL_SIZE: pool}
-    layers.insert(
-        -1,
-        get_wrapped_layer(MaxPooling1D, name=f"{name}_pool", ic_params=None, **pool)[0],
-    )
-    return layers
+    if pool:
+        if pool is True:
+            pool = {}
+        elif type(pool) is int:
+            pool = {PARAM_POOL_SIZE: pool}
+        conv_layer = get_wrapped_layer(
+            conv_layer, MaxPooling1D, f"{name}_pool", ic_params=None, **pool
+        )
+
+    if ic_params:
+        conv_layer = wrap_layer_with_ic(conv_layer, name, **ic_params)
+
+    return conv_layer
 
 
-def get_layer(layer_type, name, is_last_of_type=False, **layer_params):
+def get_layer(input_layer, layer_type, name, is_last_of_type=False, **layer_params):
     layer = None
     if layer_type == Conv1D.__name__:
-        return get_conv1d_layer(name, **layer_params)
+        return get_conv1d_layer(input_layer, name, **layer_params)
     elif layer_type == LSTM.__name__:
         layer_params.setdefault(PARAM_RETURN_SEQUENCES, not is_last_of_type)
     elif layer_type == Dense.__name__:
         layer_params.setdefault(PARAM_ACTIVATION, "relu")
-    return get_wrapped_layer(layer_type, name, **layer_params)
-
-
-def count_layers(layers, default_type=None):
-    last_layers = {}
-    layer_count = []
-    num_layers = len(layers)
-    for i in range(num_layers):
-        layer_type = layers[i].get("type", default_type)
-        if layer_type is None:
-            return ValueError(f"layer {i} has no type")
-        last_layer_index, last_layer_num = last_layers.get(layer_type, (None, 0))
-
-        layer_num = last_layer_num + 1
-        layer_count.append([layer_num, True])
-        if last_layer_index is not None:
-            layer_count[last_layer_index][1] = False
-
-        last_layers[layer_type] = (i, layer_num)
-
-    return layer_count
-
-
-def get_model_layers(layers, default_type=None, input_shape=None):
-    model_layers = []
-    layer_count = count_layers(layers, default_type=default_type)
-    for i in range(len(layers)):
-        layer_params = layers[i]
-        layer_type = layer_params.pop("type", default_type)
-        layer_type_num, is_last_of_type = layer_count[i]
-
-        name = layer_params.pop(PARAM_NAME, f"{layer_type}_{layer_type_num}".lower())
-        if input_shape is not None:
-            layer_params[PARAM_INPUT_SHAPE] = input_shape
-            input_shape = None
-        model_layers += get_layer(
-            layer_type, name, is_last_of_type=is_last_of_type, **layer_params,
-        )
-
-    return model_layers
+    return get_wrapped_layer(input_layer, layer_type, name, **layer_params)
 
 
 def get_model_from_layers(
@@ -155,29 +136,39 @@ def get_model_from_layers(
     elif len(layers) == 0:
         raise ValueError("Must specify at least one layer")
 
-    model_layers = []
+    input_layer = Input(shape=input_shape, name="input")
+    X = input_layer
     if dropout > 0:
         noise_shape = [None, *input_shape]
         if layers[0]["type"] == LSTM.__name__:
             noise_shape[1] = 1
-        model_layers = get_wrapped_layer(
+        X = get_layer(
+            X,
             Dropout,
             "input_dropout",
             ic_params=None,
-            input_shape=input_shape,
             noise_shape=noise_shape,
             rate=dropout,
         )
-        input_shape = None
 
-    model_layers += get_model_layers(layers, input_shape=input_shape)
+    layer_count = count_layers(layers)
+    for i in range(len(layers)):
+        layer_params = layers[i]
+        layer_type = layer_params.pop("type")
+        layer_type_num, is_last_of_type = layer_count[i]
 
-    if output is not None:
-        output.setdefault(PARAM_UNITS, 1)
-        output.setdefault(PARAM_ACTIVATION, "sigmoid")
-        model_layers += get_wrapped_layer(Dense, "output", ic_params=None, **output)
+        name = layer_params.pop(PARAM_NAME, f"{layer_type}_{layer_type_num}".lower())
+        X = get_layer(
+            X, layer_type, name, is_last_of_type=is_last_of_type, **layer_params,
+        )
 
-    model = Sequential(model_layers)
+    if not output:
+        output = {}
+    output.setdefault(PARAM_UNITS, 1)
+    output.setdefault(PARAM_ACTIVATION, "sigmoid")
+    output_layer = get_layer(X, Dense, "output", ic_params=None, **output)
+
+    model = Model(inputs=input_layer, outputs=output_layer)
     if plot_model_file is not None:
         plot_model(
             model, to_file=plot_model_file, show_shapes=True, show_layer_names=True
