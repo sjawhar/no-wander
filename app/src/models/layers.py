@@ -22,7 +22,7 @@ from .constants import (
 logger = logging.getLogger(__name__)
 
 
-def wrap_layer_with_ic(layer, name, dropout=0.2, batchnorm=True):
+def add_ic_layer(layer, name, dropout=0.2, batchnorm=True):
     if batchnorm:
         logger.debug(f'Adding layer "{name}" - BatchNorm')
         layer = BatchNormalization(name=f"{name}_batchnorm")(layer)
@@ -32,7 +32,8 @@ def wrap_layer_with_ic(layer, name, dropout=0.2, batchnorm=True):
     return layer
 
 
-def add_wrapped_layer(input_layer, layer_type, name, ic_params={}, **kwargs):
+def get_regularizers(**kwargs):
+    regularizers = {}
     for arg in kwargs:
         if not arg.endswith("_regularizer"):
             continue
@@ -47,52 +48,60 @@ def add_wrapped_layer(input_layer, layer_type, name, ic_params={}, **kwargs):
         logger.debug(
             f"Adding regularizer {reg.__class__.__name__} to {name}: {reg.get_config()}"
         )
-        kwargs[arg] = reg
-
-    layer = deserialize(
-        {"class_name": layer_type, "config": {PARAM_NAME: name, **kwargs}}
-    )(input_layer)
-    if ic_params:
-        layer = wrap_layer_with_ic(layer, name, **ic_params)
-    return layer
+        regularizers[arg] = reg
+    return regularizers
 
 
-def add_conv1d_layer(input_layer, name, ic_params={}, pool=None, **kwargs):
-    kwargs.setdefault(PARAM_ACTIVATION, "relu")
-    conv_layer = add_wrapped_layer(input_layer, Conv1D, name, ic_params=None, **kwargs)
-
-    if pool:
-        if pool is True:
-            pool = {}
-        elif type(pool) is int:
-            pool = {PARAM_POOL_SIZE: pool}
-        conv_layer = add_wrapped_layer(
-            conv_layer, MaxPooling1D, f"{name}_pool", ic_params=None, **pool
-        )
-
-    if ic_params:
-        conv_layer = wrap_layer_with_ic(conv_layer, name, **ic_params)
-
-    return conv_layer
-
-
-def add_layer(input_layer, layer_type, name, is_last_of_type=False, **layer_params):
+def add_layer_by_type(input_layer, layer_type, **kwargs):
     if type(layer_type) is type:
-        layer_type = layer_type.__name__
+        return layer_type(**kwargs)(input_layer)
 
-    layer_builder = None
+    return deserialize({"class_name": layer_type, "config": kwargs})(input_layer)
+
+
+def add_conv1d_layer(input_layer, name, pool=None, **kwargs):
+    kwargs.setdefault(PARAM_ACTIVATION, "relu")
+    conv_layer = add_layer_by_type(input_layer, Conv1D, name=name, **kwargs)
+
+    if pool is True:
+        pool = {}
+    elif type(pool) is int:
+        pool = {PARAM_POOL_SIZE: pool}
+
+    if type(pool) is not dict:
+        return conv_layer
+
+    return add_layer_by_type(conv_layer, MaxPooling1D, name=f"{name}_pool", **pool)
+
+
+def get_layer_builder(layer_type):
     if layer_type == LAYER_ENCODER:
-        layer_builder = add_encoder_layer
+        return add_encoder_layer
     elif layer_type == LAYER_POSITION_ENCODING:
-        layer_builder = add_position_encoding
-    elif layer_type == Conv1D.__name__:
-        layer_builder = add_conv1d_layer
-    elif layer_type == Dense.__name__:
+        return add_position_encoding
+    elif type(layer_type) is Conv1D or layer_type == Conv1D.__name__:
+        return add_conv1d_layer
+    return lambda input_layer, name, **kwargs: add_layer_by_type(
+        input_layer, layer_type, name=name, **kwargs
+    )
+
+
+def add_layer(
+    input_layer, name, layer_type, is_last_of_type=False, ic_params=None, **layer_params
+):
+    if type(layer_type) is Dense or layer_type == Dense.__name__:
         layer_params.setdefault(PARAM_ACTIVATION, "relu")
-    elif layer_type == LSTM.__name__:
+    elif type(layer_type) is LSTM or layer_type == LSTM.__name__:
         layer_params.setdefault(PARAM_RETURN_SEQUENCES, not is_last_of_type)
 
-    logger.debug(f'Adding layer "{name}" - {layer_type}: {layer_params}')
-    if layer_builder is not None:
-        return layer_builder(input_layer, name, **layer_params)
-    return add_wrapped_layer(input_layer, layer_type, name, **layer_params)
+    layer_type_name = layer_type.__name__ if type(layer_type) is type else layer_type
+    logger.debug(f'Adding layer "{name}" - {layer_type_name}: {layer_params}')
+
+    layer_builder = get_layer_builder(layer_type)
+    layer_params.update(get_regularizers(**layer_params))
+    next_layer = layer_builder(input_layer, name, **layer_params)
+
+    if type(ic_params) is dict:
+        next_layer = add_ic_layer(next_layer, name, **ic_params)
+
+    return next_layer

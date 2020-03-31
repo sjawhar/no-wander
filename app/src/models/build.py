@@ -73,18 +73,13 @@ def get_model_from_layers(
     input_layer = Input(shape=input_shape, name="input")
     X = input_layer
     if encode_position:
-        X = add_layer(X, LAYER_POSITION_ENCODING, "input_encode_position")
+        X = add_layer(X, "input_encode_position", LAYER_POSITION_ENCODING)
     if dropout > 0:
         noise_shape = [None, *input_shape]
         if layers[0]["type"] == LSTM.__name__:
             noise_shape[1] = 1
         X = add_layer(
-            X,
-            Dropout,
-            "input_dropout",
-            ic_params=None,
-            noise_shape=noise_shape,
-            rate=dropout,
+            X, "input_dropout", Dropout, noise_shape=noise_shape, rate=dropout
         )
 
     layer_count = count_layers(layers)
@@ -95,14 +90,14 @@ def get_model_from_layers(
 
         name = layer_params.pop(PARAM_NAME, f"{layer_type}_{layer_type_num}".lower())
         X = add_layer(
-            X, layer_type, name, is_last_of_type=is_last_of_type, **layer_params,
+            X, name, layer_type, is_last_of_type=is_last_of_type, **layer_params
         )
 
     if not output:
         output = {}
     output.setdefault(PARAM_UNITS, 1)
     output.setdefault(PARAM_ACTIVATION, "sigmoid")
-    output_layer = add_layer(X, Dense, "output", ic_params=None, **output)
+    output_layer = add_layer(X, "output", Dense, **output)
 
     model = Model(inputs=input_layer, outputs=output_layer)
     if plot_model_file is not None:
