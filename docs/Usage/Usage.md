@@ -116,6 +116,9 @@ Start and end of post-recovery window, in seconds. Default is `0 3`
 **`-p, --preprocess`**  
 Type of preprocessing to perform on input data. Valid options are "extract-eeg", "normalize", and "none". Default is "none".
 
+**`--encode-position`**
+Add positional encoding to input, before dropout. Default is false
+
 **`--dropout`**  
 Dropout rate for input. Default is 0
 
@@ -155,6 +158,14 @@ Print metrics in Gradient chart format every epoch. Default is false
 In general layers use their default values as specified in the Keras/TensorFlow documentation, with the following exceptions:
 * `Dense` and `Conv1D` layers default to `activation="relu"`.
 * An `LSTM` layer defaults to `return_sequences=False` if it is the final LSTM layer and `return_sequences=True` otherwise.
+
+Using `Encoder` as the layer type will create a multi-head attention (MHA) + point-wise feed-forward (FF) layer stack, in the style of the Transformer network. This layer type accepts the following parameters:
+* `attention_activation`: Activation to use inside MHA layer. Default is `null`
+* `dropout`: Dropout to use after MHA and FF layers, before residual connection. Default is `0.1`
+* `epsilon`: Divide-by-zero check parameter for [LayerNormalization](https://www.tensorflow.org/api_docs/python/tf/keras/layers/LayerNormalization). Default is `1e-6`
+* `ff_activation`: Activation to use on hidden Dense layer of FF layer. Default is `"relu"`
+* `ff_units`: Units of hidden Dense layer of FF layer. Default is `1000`
+* `num_heads`: Number of MHA heads. Default is `8`
 
 Each layer specification object can include one or more regularization parameters (e.g. `kernel_regularizer`). The value of these parameters should be either a string or a dict:
   * `"l1"` or `"l2"` will create the corresponding regularizer with default parameters.
