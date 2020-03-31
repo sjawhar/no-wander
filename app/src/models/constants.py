@@ -1,3 +1,6 @@
+LAYER_ENCODER = "Encoder"
+LAYER_POSITION_ENCODING = "PositionEncoding"
+
 PARAM_ACTIVATION = "activation"
 PARAM_INPUT_SHAPE = "input_shape"
 PARAM_NAME = "name"

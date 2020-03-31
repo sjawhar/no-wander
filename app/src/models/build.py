@@ -16,6 +16,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import plot_model
 from .layers import add_layer
 from .constants import (
+    LAYER_POSITION_ENCODING,
     PARAM_ACTIVATION,
     PARAM_NAME,
     PARAM_UNITS,
@@ -60,6 +61,7 @@ def get_model_from_layers(
     layers,
     input_shape,
     dropout=0,
+    encode_position=False,
     output={},
     plot_model_file=None,
 ):
@@ -70,6 +72,8 @@ def get_model_from_layers(
 
     input_layer = Input(shape=input_shape, name="input")
     X = input_layer
+    if encode_position:
+        X = add_layer(X, LAYER_POSITION_ENCODING, "input_encode_position")
     if dropout > 0:
         noise_shape = [None, *input_shape]
         if layers[0]["type"] == LSTM.__name__:

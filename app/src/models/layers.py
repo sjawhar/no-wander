@@ -9,8 +9,10 @@ from tensorflow.keras.layers import (
     LSTM,
     MaxPooling1D,
 )
-from .transformer import add_encoder_layer
+from .attention import add_encoder_layer, add_position_encoding
 from .constants import (
+    LAYER_ENCODER,
+    LAYER_POSITION_ENCODING,
     PARAM_ACTIVATION,
     PARAM_NAME,
     PARAM_POOL_SIZE,
@@ -23,7 +25,7 @@ logger = logging.getLogger(__name__)
 def wrap_layer_with_ic(layer, name, dropout=0.2, batchnorm=True):
     if batchnorm:
         logger.debug(f'Adding layer "{name}" - BatchNorm')
-        layer = BatchNormalization(name=f"{name}_bn")(layer)
+        layer = BatchNormalization(name=f"{name}_batchnorm")(layer)
     if dropout:
         logger.debug(f'Adding layer "{name}" - Dropout: {dropout}')
         layer = Dropout(dropout, name=f"{name}_dropout")(layer)
@@ -77,14 +79,20 @@ def add_conv1d_layer(input_layer, name, ic_params={}, pool=None, **kwargs):
 def add_layer(input_layer, layer_type, name, is_last_of_type=False, **layer_params):
     if type(layer_type) is type:
         layer_type = layer_type.__name__
-    logger.debug(f'Adding layer "{name}" - {layer_type}: {layer_params}')
 
-    if layer_type == Conv1D.__name__:
-        return add_conv1d_layer(input_layer, name, **layer_params)
-    elif layer_type == "Encoder":
-        return add_encoder_layer(input_layer, name, **layer_params)
-    elif layer_type == LSTM.__name__:
-        layer_params.setdefault(PARAM_RETURN_SEQUENCES, not is_last_of_type)
+    layer_builder = None
+    if layer_type == LAYER_ENCODER:
+        layer_builder = add_encoder_layer
+    elif layer_type == LAYER_POSITION_ENCODING:
+        layer_builder = add_position_encoding
+    elif layer_type == Conv1D.__name__:
+        layer_builder = add_conv1d_layer
     elif layer_type == Dense.__name__:
         layer_params.setdefault(PARAM_ACTIVATION, "relu")
+    elif layer_type == LSTM.__name__:
+        layer_params.setdefault(PARAM_RETURN_SEQUENCES, not is_last_of_type)
+
+    logger.debug(f'Adding layer "{name}" - {layer_type}: {layer_params}')
+    if layer_builder is not None:
+        return layer_builder(input_layer, name, **layer_params)
     return add_wrapped_layer(input_layer, layer_type, name, **layer_params)

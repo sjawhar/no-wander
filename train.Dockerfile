@@ -11,6 +11,9 @@ RUN DEV_PACKAGES=" \
         git+https://github.com/aestrivex/bctpy@0.5.1 \
         graphviz==0.13.2 \
         jupyterlab==2.0.1 \
+        keras-multi-head==0.22.0 \
+        keras-pos-embd==0.11.0 \
+        keras-position-wise-feed-forward==0.6.0 \
         mne==0.19.2 \
         pandas==1.0.3 \
         pydot==1.4.1 \
