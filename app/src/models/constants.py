@@ -1,0 +1,7 @@
+PARAM_ACTIVATION = "activation"
+PARAM_INPUT_SHAPE = "input_shape"
+PARAM_NAME = "name"
+PARAM_POOL_SIZE = "pool_size"
+PARAM_RETURN_SEQUENCES = "return_sequences"
+PARAM_UNITS = "units"
+PARAM_VERBOSE = "verbose"
