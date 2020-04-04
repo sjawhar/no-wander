@@ -225,6 +225,12 @@ def train_setup_parser(parser):
         help="Type of preprocessing to perform on input data",
     )
     parser.add_argument(
+        "--encode-position",
+        action="store_true",
+        default=None,
+        help="Add positional encoding to input, before dropout",
+    )
+    parser.add_argument(
         "--dropout", type=float, help="Dropout rate for input",
     )
     parser.add_argument(

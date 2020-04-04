@@ -137,6 +137,7 @@ def build_and_train_model(
     sequence_size,
     layers,
     dropout=0,
+    encode_position=False,
     output={},
     # Data prep params
     post_window=WINDOW_POST_RECOVERY,
@@ -177,6 +178,7 @@ def build_and_train_model(
         layers,
         input_shape,
         dropout=dropout,
+        encode_position=encode_position,
         output=output,
         plot_model_file=model_dir / "model.png",
     )
