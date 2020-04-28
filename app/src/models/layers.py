@@ -12,6 +12,7 @@ from tensorflow.keras.layers import (
 from .attention import add_encoder_layer, add_position_encoding
 from .constants import (
     LAYER_ENCODER,
+    LAYER_IC,
     LAYER_POSITION_ENCODING,
     PARAM_ACTIVATION,
     PARAM_NAME,
@@ -22,11 +23,12 @@ from .constants import (
 logger = logging.getLogger(__name__)
 
 
-def add_ic_layer(layer, name, dropout=0.2, batchnorm=True):
+def add_ic_layer(layer, name, batchnorm=True, dropout=0.2):
     if batchnorm:
         logger.debug(f'Adding layer "{name}" - BatchNorm')
         layer = BatchNormalization(name=f"{name}_batchnorm")(layer)
     if dropout:
+        # TODO: noise mask for 3D input
         logger.debug(f'Adding layer "{name}" - Dropout: {dropout}')
         layer = Dropout(dropout, name=f"{name}_dropout")(layer)
     return layer
@@ -77,6 +79,8 @@ def add_conv1d_layer(input_layer, name, pool=None, **kwargs):
 def get_layer_builder(layer_type):
     if layer_type == LAYER_ENCODER:
         return add_encoder_layer
+    elif layer_type == LAYER_IC:
+        return add_ic_layer
     elif layer_type == LAYER_POSITION_ENCODING:
         return add_position_encoding
     elif type(layer_type) is Conv1D or layer_type == Conv1D.__name__:
@@ -100,6 +104,8 @@ def add_layer(
     layer_builder = get_layer_builder(layer_type)
     layer_params.update(get_regularizers(**layer_params))
     next_layer = layer_builder(input_layer, name, **layer_params)
+
+    # TODO: TimeDistributed and Bidirectional
 
     if type(ic_params) is dict:
         next_layer = add_ic_layer(next_layer, name, **ic_params)
