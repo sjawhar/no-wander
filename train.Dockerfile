@@ -14,7 +14,7 @@ RUN DEV_PACKAGES=" \
         keras-multi-head==0.22.0 \
         keras-pos-embd==0.11.0 \
         keras-position-wise-feed-forward==0.6.0 \
-        mne==0.19.2 \
+        mne==0.20.1 \
         pandas==1.0.3 \
         pydot==1.4.1 \
         PyWavelets==1.1.1 \
