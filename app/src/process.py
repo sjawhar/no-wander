@@ -27,11 +27,11 @@ WINDOW_PRE_RECOVERY = "WINDOW_PRE_RECOVERY"
 logger = logging.getLogger(__name__)
 
 # TODO: Get subject from session path
-def get_files_by_session(data_dir):
+def get_files_by_session(data_dir, file_glob="*.[A-Z]*.[0-9]*.csv"):
     logger.info("Collecting files for processing...")
     num_files = 0
     raw_files = {}
-    for file in data_dir.glob("*.[A-Z]*.[0-9]*.csv"):
+    for file in data_dir.glob(file_glob):
         name_parts = file.name.split(".")
         session = PurePath(".".join(name_parts[:-3] + name_parts[-2:]))
         if session not in raw_files:
@@ -56,7 +56,7 @@ def get_renamer(s, i):
     )
 
 
-def load_session_data(files, aux_channel=None):
+def load_session_data(files, aux_channel=None, rename=True):
     logger.debug("Loading session data...")
     num_files = len(files)
     data = [None] * num_files
@@ -66,24 +66,25 @@ def load_session_data(files, aux_channel=None):
         logger.debug(f"Reading {datafile} to dataframe...")
         source = datafile.name.split(".")[-3]
         df = pd.read_csv(datafile, index_col=0)
-        df.rename(columns=get_renamer(source, i), inplace=True)
         data[i] = df
+
         if source == SOURCE_EEG:
             eeg_data = df
 
-        if not COL_RIGHT_AUX in df.columns:
-            continue
-        elif aux_channel:
-            logger.debug(f"Renaming {COL_RIGHT_AUX} to {aux_channel}...")
-            df.rename(columns={COL_RIGHT_AUX: aux_channel}, inplace=True)
-            continue
-        elif not df[COL_RIGHT_AUX].any():
-            logger.debug(
-                f"{COL_RIGHT_AUX} has no values and no rename provided. Dropping..."
-            )
-            df.drop(columns=[COL_RIGHT_AUX], inplace=True)
-            continue
-        raise Error(f"{COL_RIGHT_AUX} has values, must provide channel")
+        if COL_RIGHT_AUX in df.columns:
+            if aux_channel:
+                logger.debug(f"Renaming {COL_RIGHT_AUX} to {aux_channel}...")
+                df.rename(columns={COL_RIGHT_AUX: aux_channel}, inplace=True)
+            elif not df[COL_RIGHT_AUX].any():
+                logger.debug(
+                    f"{COL_RIGHT_AUX} has no values and no rename provided. Dropping..."
+                )
+                df.drop(columns=[COL_RIGHT_AUX], inplace=True)
+            else:
+                raise Error(f"{COL_RIGHT_AUX} has values, must provide channel")
+
+        if rename is True:
+            df.rename(columns=get_renamer(source, i), inplace=True)
 
     return data, eeg_data
 

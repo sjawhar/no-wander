@@ -42,7 +42,7 @@ def parse_dataset(filepath, train_set=DATASET_TRAIN, test_set=DATASET_TEST):
 
 def get_window_samples(data, sample_size, consecutive_samples, window):
     start, stop = window
-    is_flip = stop < 0
+    is_flip = stop <= 0
     if is_flip:
         start, stop = -stop, -start
         data = data[::-1]
