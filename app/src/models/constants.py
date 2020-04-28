@@ -1,4 +1,5 @@
 LAYER_ENCODER = "Encoder"
+LAYER_IC = "IC"
 LAYER_POSITION_ENCODING = "PositionEncoding"
 
 PARAM_ACTIVATION = "activation"
