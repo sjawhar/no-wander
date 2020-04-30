@@ -6,6 +6,14 @@ from .constants import (
     SAMPLE_RATE,
 )
 
+FREQ_BANDS = [
+    ["delta", 0],
+    ["theta", 4],
+    ["alpha", 8],
+    ["beta", 14],
+    ["gamma1", 30],
+    ["gamma2", 65],
+]
 
 def get_eeg_data(X_raw, features):
     features_eeg = [col for col in features if "EEG_" in col]
@@ -58,23 +66,15 @@ def extract_frequency_features(X):
     from pywt import wavedec
 
     psds, freqs = psd_array_multitaper(X, SAMPLE_RATE, fmax=110)
-    bands = [
-        ["delta", 0],
-        ["theta", 4],
-        ["alpha", 8],
-        ["beta", 14],
-        ["gamma1", 30],
-        ["gamma2", 65],
-    ]
+    bands = [(name, 0) for (name, _) in FREQ_BANDS]
     num_bands = len(bands)
 
     total = psds.sum(axis=-1)
     total_no_zeros = np.where(total > 0, total, 1)
     for i in range(num_bands):
-        band = bands[i]
-        _, fmin = band
-        fmax = (freqs[-1] + 1) if i == (num_bands - 1) else bands[i + 1][1]
-        band[1] = psds[:, :, (freqs >= fmin) & (freqs < fmax)].sum() / total_no_zeros
+        fmin = FREQ_BANDS[i][1]
+        fmax = (freqs[-1] + 1) if i == (num_bands - 1) else FREQ_BANDS[i + 1][1]
+        bands[i][1] = psds[:, :, (freqs >= fmin) & (freqs < fmax)].sum() / total_no_zeros
     bands.append(["energy", total])
 
     dwt_level = 7
