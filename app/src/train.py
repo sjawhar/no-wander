@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 from pathlib import Path
 from sklearn.model_selection import train_test_split
-from .datasets import read_dataset
+from .datasets import read_dataset, DATASET_TRAIN, DATASET_VAL
 from .features import preprocess_data_test, preprocess_data_train
 from .models import compile_model, fit_model, get_model_from_layers
 from .constants import PREPROCESS_NONE
@@ -151,13 +151,14 @@ def build_and_train_model(
         model_dir.mkdir()
     logger.debug(f"Model files will be saved to {model_dir}")
 
-    samples_train, labels_train, samples_val, labels_val, features_raw = read_dataset(
+    datasets, features_raw = read_dataset(
         data_file,
         sample_size,
         1 if shuffle_samples else sequence_size,
         pre_window,
         post_window,
     )
+    samples_train, labels_train = datasets[DATASET_TRAIN]
     logger.info(f"{len(samples_train)} samples in training set")
     logger.info(f"Raw features: {', '.join(features_raw)}")
 
@@ -185,6 +186,7 @@ def build_and_train_model(
     model.summary()
 
     if train_kwargs.get("epochs", 0):
+        samples_val, labels_val = datasets[DATASET_VAL]
         samples_val = preprocess_data_test(samples_val, preprocessor)
         train_model(
             model,

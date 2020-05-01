@@ -13,13 +13,12 @@ logger = logging.getLogger(__name__)
 
 
 def parse_dataset(filepath, train_set=DATASET_TRAIN, test_set=DATASET_TEST):
-    datasets = []
+    datasets = {}
     features = {}
 
     with h5py.File(filepath, "r") as hf:
         for set_type in [train_set, test_set]:
             if set_type is None:
-                datasets.append(None)
                 continue
 
             set_group = hf[set_type]
@@ -34,10 +33,10 @@ def parse_dataset(filepath, train_set=DATASET_TRAIN, test_set=DATASET_TEST):
 
                 data[i] = dset[:], dset.attrs["recovery"], column_numbers
                 i += 1
-            datasets.append(data)
+            datasets[set_type] = data
 
     features = [feat for (feat, _) in sorted(features.items(), key=lambda x: x[1])]
-    return (*datasets, features)
+    return datasets, features
 
 
 def get_window_samples(data, sample_size, consecutive_samples, window):
@@ -110,16 +109,16 @@ def read_dataset(
     pre_window = tuple(int(ix * sample_rate) for ix in pre_window)
     post_window = tuple(int(ix * sample_rate) for ix in post_window)
 
-    data_train, data_val, features = parse_dataset(filepath, test_set=DATASET_VAL)
-    datasets = []
-    for data, dataset in [(data_train, DATASET_TRAIN), (data_val, DATASET_VAL)]:
+    data, features = parse_dataset(filepath, test_set=DATASET_VAL)
+    datasets = {}
+    for set_type in [DATASET_TRAIN, DATASET_VAL]:
         samples, num_samples = get_samples(
-            data, sample_size, consecutive_samples, pre_window, post_window
+            data[set_type], sample_size, consecutive_samples, pre_window, post_window
         )
         X, Y = samples_to_tensors(samples, (num_samples, sample_size, len(features)))
-        logger.debug(f"{dataset} data shape {X.shape}")
-        datasets += [X, Y]
-    return (*datasets, features)
+        logger.debug(f"{set_type} data shape {X.shape}")
+        datasets[set_type] = (X, Y)
+    return datasets, features
 
 
 def save_epochs(filepath, epochs):
