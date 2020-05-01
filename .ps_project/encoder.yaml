@@ -1,0 +1,23 @@
+name: encoder-l1-s3q256-dense-u64-u32
+projectId: prmqc6jjx
+machineType: GPU+
+container: sjawhar/no-wander:train-0.4.0
+containerUser: tf
+workingDirectory: /home/tf
+command: |
+  python3 -m no_wander train \
+    --layers '[
+      {"type": "Encoder", "num_heads": 6},
+      {"type": "Flatten", "ic_params": {"dropout": 0.2, "batchnorm": true}},
+      {"type": "Dense", "units": 64, "activation": "relu", "ic_params": {"dropout": 0.2, "batchnorm": true}},
+      {"type": "Dense", "units": 32, "activation": "relu", "ic_params": {"dropout": 0.2, "batchnorm": true}}
+    ]' \
+    --sample-size 3 \
+    --sequence-size 256 \
+    --preprocess normalize \
+    --encode-position \
+    --epochs 150 \
+    --gradient-metrics \
+    /storage/no-wander/data/1572178629-1584963221-train.h5 \
+    /artifacts
+modelType: Tensorflow
