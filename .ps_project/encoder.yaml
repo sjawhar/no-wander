@@ -21,3 +21,4 @@ command: |
     /storage/no-wander/data/1572178629-1584963221-train.h5 \
     /artifacts
 modelType: Tensorflow
+modelPath: /artifacts/model_best
