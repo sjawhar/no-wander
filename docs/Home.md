@@ -24,8 +24,7 @@ There is support for this view in the literature. In their 2006 review paper,<su
 * **Phase 2a - Model Design**
     * **Type:** Data Science
     * **Deliverable:** Design of mind-wandering detector model; requirements for data processing pipeline
-    * **Status:** In Progress
-    * **ETA:** Q1 2020
+    * **Status:** Complete
 * **Phase 2b - Single Subject**
     * **Type:** Data Collection
     * **Deliverable:** 1000+ recorded recoveries from single subject
@@ -37,23 +36,22 @@ There is support for this view in the literature. In their 2006 review paper,<su
 * **Phase 4 - Model Training**
     * **Type:** Data Science
     * **Deliverable:** Realtime mind-wandering detector
-    * **Status:** Started
-    * **ETA:** Q1 2020
+    * **Status:** Complete
 * **Phase 5 - NoWander v0.1**
     * **Type:** Engineering
     * **Deliverable:** Integrate mind-wandering detector with feedback mechanism for complete closed-loop system
     * **Status:** Unstarted
-    * **ETA:** Q1 2020
+    * **ETA:** TBD
 * **Phase 6 - Multiple Subjects**
     * **Type:** Data Collection
     * **Deliverable:** 5000+ recorded recoveries from multiple subjects
     * **Status:** Unstarted
-    * **ETA:** Q2 2020
+    * **ETA:** TBD
 * **Phase 7 - Model Validation**
     * **Type:** Data Science
     * **Deliverable:** ML model tuned for generalizability and robustness
     * **Status:** Unstarted
-    * **ETA:** Q2 2020
+    * **ETA:** TBD
 * **Phase 8 - Trials**
     * **Type:** Clinical Trials
     * **Deliverable:** Studies validating intervention with outcome measures
