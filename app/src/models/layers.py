@@ -34,8 +34,8 @@ def add_ic_layer(layer, name, batchnorm=True, dropout=0.2):
     return layer
 
 
-def get_regularizers(**kwargs):
-    regularizers = {}
+def get_regularizers(name=None, **kwargs):
+    regs = {}
     for arg in kwargs:
         if not arg.endswith("_regularizer"):
             continue
@@ -50,8 +50,8 @@ def get_regularizers(**kwargs):
         logger.debug(
             f"Adding regularizer {reg.__class__.__name__} to {name}: {reg.get_config()}"
         )
-        regularizers[arg] = reg
-    return regularizers
+        regs[arg] = reg
+    return regs
 
 
 def add_layer_by_type(input_layer, layer_type, **kwargs):

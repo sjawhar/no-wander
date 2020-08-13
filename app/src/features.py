@@ -15,6 +15,7 @@ FREQ_BANDS = [
     ["gamma2", 65],
 ]
 
+
 def get_eeg_data(X_raw, features):
     features_eeg = [col for col in features if "EEG_" in col]
     X_eeg = np.nan_to_num(X_raw[:, :, np.isin(features, features_eeg)], 0)
@@ -74,7 +75,9 @@ def extract_frequency_features(X):
     for i in range(num_bands):
         fmin = FREQ_BANDS[i][1]
         fmax = (freqs[-1] + 1) if i == (num_bands - 1) else FREQ_BANDS[i + 1][1]
-        bands[i][1] = psds[:, :, (freqs >= fmin) & (freqs < fmax)].sum() / total_no_zeros
+        bands[i][1] = (
+            psds[:, :, (freqs >= fmin) & (freqs < fmax)].sum() / total_no_zeros
+        )
     bands.append(["energy", total])
 
     dwt_level = 7

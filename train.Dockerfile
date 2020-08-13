@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:2.2.0-gpu-jupyter
+FROM tensorflow/tensorflow:2.3.0-gpu-jupyter
 
 RUN DEV_PACKAGES=" \
         git \
@@ -9,7 +9,7 @@ RUN DEV_PACKAGES=" \
  && apt-get install -y $DEV_PACKAGES \
  && pip install --no-cache-dir \
         autoreject==0.2.1 \
-        git+https://github.com/aestrivex/bctpy@0.5.1 \
+        bctpy==0.5.2 \
         graphviz==0.13.2 \
         jupyterlab==2.0.1 \
         keras-multi-head==0.22.0 \
