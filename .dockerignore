@@ -1,4 +1,10 @@
-app/__pycache__
-app/.ipynb_checkpoints
-app/.pytest_cache
-data
+*
+!no_wander
+!Pipfile
+!Pipfile.lock
+!setup.py
+!test
+**/__pycache__
+**/.ipynb_checkpoints
+**/.pytest_cache
+**/*.pyc

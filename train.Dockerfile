@@ -27,8 +27,8 @@ RUN groupadd --gid 1000 tf \
  && useradd --create-home --shell /bin/bash --uid 1000 --gid tf tf
 
 ARG NO_WANDER_DIR=/opt/no_wander
-COPY app/src $NO_WANDER_DIR
-ENV PYTHONPATH=$PYTHONPATH:$NO_WANDER_DIR/..
+COPY no_wander $NO_WANDER_DIR/no_wander
+ENV PYTHONPATH=$PYTHONPATH:$NO_WANDER_DIR
 
 WORKDIR /home/tf
 USER tf

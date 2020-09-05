@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from src.datasets import get_window_samples
+from no_wander.datasets import get_window_samples
 
 
 @pytest.fixture

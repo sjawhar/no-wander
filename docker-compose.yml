@@ -1,32 +1,33 @@
-version: '3'
+version: '3.4'
 
 services:
 
   record:
-    build: .
+    build:
+      context: .
+      target: prod
     image: sjawhar/no-wander:record
-    container_name: no-wander-record
     environment:
       DISPLAY:
       XAUTHORITY: /tmp/.docker.xauth
     volumes:
-      - ./app/src:/opt/no_wander
       - ./data:/home/muselsl/data
       - /tmp/.docker.xauth:/tmp/.docker.xauth
       - /tmp/.X11-unix:/tmp/.X11-unix
-      - ${HOME}/.config/muselsl/bluetooth:/etc/bluetooth
-      - ${HOME}/.config/muselsl/dbus:/etc/dbus-1
-      - ${HOME}/.config/muselsl/devices:/var/lib/bluetooth
+      - ~/.config/muselsl/bluetooth:/etc/bluetooth
+      - ~/.config/muselsl/dbus:/etc/dbus-1
+      - ~/.config/muselsl/devices:/var/lib/bluetooth
     network_mode: host
     privileged: true
     entrypoint: [python3, -m, no_wander, record]
 
   process:
-    build: .
+    build:
+      context: .
+      target: prod
     image: sjawhar/no-wander:record
-    container_name: no-wander-process
     volumes:
-      - ./app/src:/opt/no_wander
+      - ./no_wander:/opt/no_wander/no_wander
       - ./data:/home/muselsl/data
     entrypoint: [python3, -m, no_wander, process]
 
@@ -35,9 +36,8 @@ services:
       context: .
       dockerfile: train.Dockerfile
     image: sjawhar/no-wander:train
-    container_name: no-wander-train
     volumes:
-      - ./app/src:/opt/no_wander
+      - ./no_wander:/opt/no_wander/no_wander
       - ./data:/home/tf/data
       - ./models:/home/tf/models
     entrypoint: [python3, -m, no_wander, train]
@@ -47,9 +47,8 @@ services:
       context: .
       dockerfile: train.Dockerfile
     image: sjawhar/no-wander:train
-    container_name: no-wander-notebook
     volumes:
-      - ./app/src:/opt/no_wander
+      - ./no_wander:/opt/no_wander/no_wander
       - ./data:/home/tf/data
       - ./models:/home/tf/models
       - ./notebooks:/home/tf/notebooks

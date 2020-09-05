@@ -3,8 +3,8 @@ version: '3.5'
 services:
 
   pipenv:
-    image: sjawhar/pipenv:3.7-2020.6.2
+    image: sjawhar/no-wander:record-dev
     volumes:
-      - ./app:/app
-      - ~/.local/share/virtualenvs:/home/pipenv/.local/share/virtualenvs
+      - .:/app
     working_dir: /app
+    entrypoint: [pipenv]

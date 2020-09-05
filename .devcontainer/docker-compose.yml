@@ -1,0 +1,12 @@
+version: '3.4'
+services:
+
+  record:
+    build:
+      context: .
+      target: dev
+    image: sjawhar/no-wander:record-devcontainer
+    volumes:
+      - .:/app:cached
+    entrypoint: [/bin/sh, -c]
+    command: "'while sleep 1000; do :; done'"

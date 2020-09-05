@@ -38,7 +38,8 @@ def start_stream(address, sources, confirm=True, restart=False):
     """Return True to indicate success, else False"""
     if restart is True:
         end_stream()
-        (address, sources) = stream_data["args"]
+        if len(stream_data["args"]) == 2:
+            (address, sources) = stream_data["args"]
 
     if address is None:
         logger.info("No address provided, searching for muses...")
