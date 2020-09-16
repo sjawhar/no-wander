@@ -7,18 +7,24 @@ from time import time
 from .record import record_signals
 from .stream import start_stream
 from .constants import (
+    DIR_ASSETS,
     EVENT_RECORD_CHUNK_START,
     EVENT_SESSION_END,
     EVENT_STREAMING_ERROR,
     EVENT_STREAMING_RESTARTED,
-    MARKER_RECOVER,
+    MARKER_PROBE,
     MARKER_SYNC,
+    MARKER_USER_FOCUS,
+    MARKER_USER_RECOVER,
 )
 
 
 KEYS_QUIT = ["esc", "q"]
-KEYS_RECOVERY = ["up", "down", "left", "right", "space"]
-SOUND_BELL = (Path(__file__).parent / "assets" / "bell.wav").resolve()
+KEYS_RECOVERY = ["up", "right", "space"]
+KEYS_FOCUS = ["left", "down"]
+SOUND_PROBE = DIR_ASSETS / "chime.wav"
+SOUND_SESSION_BEGIN = DIR_ASSETS / "bell.wav"
+SOUND_SESSION_END = SOUND_SESSION_BEGIN
 
 logger = logging.getLogger(__name__)
 
@@ -34,15 +40,33 @@ def get_duration(duration=None):
     return duration * 60
 
 
-def play_bell(wait=True):
+def play_sound(sound_name, wait=True):
     try:
-        bell = sound.Sound(SOUND_BELL)
-        bell.play()
+        sound_obj = sound.Sound(sound_name)
+        sound_obj.play()
         if not wait:
             return
-        core.wait(bell.getDuration())
+        core.wait(sound_obj.getDuration())
+    except Exception as error:
+        logger.error(f"Could not play {sound_name} sound: {error}")
+
+
+def get_probe_intervals(duration, probes):
+    try:
+        # Default std of 0 if only mean is provided
+        mean, std, *_ = list(probes) + [0]
     except:
-        logger.error("Could not play bell sound")
+        raise ValueError(f"Invalid probes configuration {probes}")
+
+    logger.debug(f"Generating probe intervals with mean {mean} and std {std}...")
+    intervals = []
+    while sum(intervals) < duration:
+        interval = np.random.normal(loc=mean, scale=std)
+        intervals.append(mean if interval <= 0 else interval)
+    intervals = intervals[:-1]
+
+    logger.debug(f"{len(intervals)} probe intervals generated!")
+    return intervals
 
 
 def handle_signals_message(message, outlet):
@@ -70,7 +94,10 @@ def handle_keypress(keys, outlet):
     for key, timestamp in keys:
         logger.debug(f"{key} pressed at time {timestamp}")
         if key in KEYS_RECOVERY:
-            outlet.push_sample([MARKER_RECOVER], timestamp)
+            outlet.push_sample([MARKER_USER_RECOVER], timestamp)
+            continue
+        elif key in KEYS_FOCUS:
+            outlet.push_sample([MARKER_USER_FOCUS], timestamp)
             continue
         elif key not in KEYS_QUIT:
             continue
@@ -82,7 +109,7 @@ def handle_keypress(keys, outlet):
     return quit
 
 
-def run_session(duration, sources, filepath):
+def run_session(duration, sources, filepath, probes=None):
     info = StreamInfo(
         name="Markers",
         type="Markers",
@@ -99,7 +126,7 @@ def run_session(duration, sources, filepath):
     )
     text.draw()
     session_window.flip()
-    play_bell(wait=False)
+    play_sound(SOUND_SESSION_BEGIN, wait=False)
 
     clock = core.Clock()
     start_time = time()
@@ -112,12 +139,23 @@ def run_session(duration, sources, filepath):
     )
     signals_process.start()
 
+    next_probe_time = None
+    if probes is not None:
+        logger.info(f"Audio probes enabled")
+        probe_intervals = get_probe_intervals(duration, np.array(probes) * 60)
+        probe_times = list(np.cumsum(probe_intervals) + time())[::-1]
+        next_probe_time = probe_times.pop()
+        logger.debug(
+            f"First of {1 + len(probe_times)} audio probes at {next_probe_time}"
+        )
+
     while signals_process.is_alive():
         try:
             if signals_conn.poll():
                 message = handle_signals_message(signals_conn.recv(), outlet)
                 if message is not None:
                     signals_conn.send(message)
+
             keys = event.getKeys(timeStamped=clock)
             if keys is not None and handle_keypress(keys, outlet) is True:
                 logger.info("Triggering end of session")
@@ -126,10 +164,17 @@ def run_session(duration, sources, filepath):
                 signals_process.join()
                 logger.info("Session ended")
                 break
+
+            if next_probe_time is not None and time() > next_probe_time:
+                marker_outlet.push_sample([MARKER_PROBE], clock.getTime())
+                play_sound(SOUND_PROBE, wait=False)
+                next_probe_time = None if len(probe_times) == 0 else probe_times.pop()
+                logger.debug(f"Audio probe played. Next probe at {next_probe_time}")
+
         except KeyboardInterrupt:
             break
 
-    play_bell()
+    play_sound(SOUND_SESSION_END)
     session_window.close()
 
     if signals_process.is_alive():

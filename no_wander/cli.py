@@ -54,12 +54,21 @@ def record_setup_parser(parser):
         help="Record gyroscope measurements",
     )
     parser.add_argument(
-        "-p",
         "--ppg",
         dest="sources",
         action="append_const",
         const=SOURCE_PPG,
         help="Record PPG measurements",
+    )
+    parser.add_argument(
+        "-p",
+        "--probes",
+        help="Intermittently sample user focus with audio probes."
+        " Provide one number X to sample every X minutes."
+        " Provide two numbers MEAN, STD to sample every Gaussian(MEAN, STD) minutes.",
+        metavar=("MEAN", "STD"),
+        nargs="+",
+        type=float,
     )
     parser.add_argument(
         "-s",
@@ -110,7 +119,7 @@ def record_run(args):
     if not args.skip_visualize:
         visualize()
 
-    run_session(get_duration(args.DURATION), args.sources, args.filename)
+    run_session(get_duration(args.DURATION), args.sources, args.filename, probes=args.probes)
     end_stream()
 
 

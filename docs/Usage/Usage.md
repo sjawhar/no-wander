@@ -33,6 +33,9 @@ By default, a Bluetooth search is conducted to find your Muse, and the first fou
 **`-f, --filename STRING`**  
 Filename prefix for recorded data. If you supply a value like `filename.csv`, chunks will be saved in files called `filename.n.SOURCE.csv`, where "n" is the chunk number and "SOURCE" is the one of "ACC", "EEG", "GYRO", or "PPG". By default, "filename" is the datetime of the recording in YYYY-mm-dd_HH-MM-SS format.
 
+**`-p, --probes MEAN [STD]`**  
+Sample user focus with audio probes. Provide one number X to sample every X minutes. Provide two numbers MEAN, STD to sample every Gaussian(MEAN, STD) minutes. Default is not to use probes.
+
 **`-s, --skip-visualize`**  
 By default, a stability check is conducted after a connection is established. The streaming data is displayed and recording does not start until the signal stabilizes.
 
@@ -45,7 +48,7 @@ Record accelerometer measurements
 **`-g, --gyro`**  
 Record gyroscope measurements
 
-**`-p, --ppg`**  
+**`--ppg`**  
 Record PPG measurements
 
 **`--no-eeg`**  
