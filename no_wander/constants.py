@@ -14,6 +14,7 @@ DIR_EPOCHS = "epochs"
 DIR_FAILED = "failed"
 DIR_INPUT = "input"
 DIR_PROCESSED = "processed"
+DIR_SUBJECT_PREFIX = "subject_"
 DIR_TEST = "test"
 
 EVENT_RECORD_CHUNK_START = "EVENT_RECORD_CHUNK_START"

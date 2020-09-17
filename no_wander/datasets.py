@@ -23,8 +23,7 @@ def parse_dataset(filepath, train_set=DATASET_TRAIN, test_set=DATASET_TEST):
 
             set_group = hf[set_type]
             data = [None] * len(set_group)
-            i = 0
-            for dset in set_group.values():
+            for i, dset in enumerate(set_group.values()):
                 columns = dset.attrs["columns"]
                 for col in columns:
                     if col not in features:
@@ -32,7 +31,6 @@ def parse_dataset(filepath, train_set=DATASET_TRAIN, test_set=DATASET_TEST):
                 column_numbers = [features[col] for col in columns]
 
                 data[i] = dset[:], dset.attrs["recovery"], column_numbers
-                i += 1
             datasets[set_type] = data
 
     features = [feat for (feat, _) in sorted(features.items(), key=lambda x: x[1])]
@@ -61,8 +59,7 @@ def get_samples(data, sample_size, consecutive_samples, pre_window, post_window)
     parsed = [None] * len(data)
     num_samples = 0
 
-    for i in range(len(data)):
-        dset, recovery_ix, features = data[i]
+    for i, (dset, recovery_ix, features) in enumerate(data):
         parsed[i] = [[], [], features]
         for j, window_data, window, window_name in [
             (0, dset[:recovery_ix], pre_window, "pre"),
@@ -132,9 +129,9 @@ def save_epochs(filepath, epochs):
             for epoch, recovery_ix, session in group_epochs:
                 data = epoch.drop(columns=[COL_MARKER_DEFAULT])
                 dset_name = "-".join([str(int(ts)) for ts in data.index[[0, -1]]])
-                date, chunk = session.split(".")[:2]
+                subject, date, chunk = session.split(".")
                 logger.debug(
-                    f"Saving epoch {dset_name} from date {date} chunk {chunk}..."
+                    f"Saving epoch {dset_name}: subject {subject}, date {date}, chunk {chunk}..."
                 )
 
                 dset = grp.create_dataset(
@@ -147,6 +144,5 @@ def save_epochs(filepath, epochs):
                 dset.attrs["columns"] = tuple(data.columns)
                 dset.attrs["date"] = date
                 dset.attrs["recovery"] = recovery_ix
-                # TODO: subject
-                dset.attrs["subject"] = 1
+                dset.attrs["subject"] = subject
     logger.info("Epochs saved!")

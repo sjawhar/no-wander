@@ -13,6 +13,8 @@ from .constants import (
     DIR_EPOCHS,
     DIR_FAILED,
     DIR_PROCESSED,
+    DIR_SUBJECT_PREFIX,
+    MARKER_USER_RECOVER,
     SAMPLE_RATE,
     SOURCE_EEG,
 )
@@ -26,17 +28,21 @@ WINDOW_PRE_RECOVERY = "WINDOW_PRE_RECOVERY"
 
 logger = logging.getLogger(__name__)
 
-# TODO: Get subject from session path
-def get_files_by_session(data_dir, file_glob="*.[A-Z]*.[0-9]*.csv"):
+
+def get_files_by_session(
+    data_dir, file_glob=f"{DIR_SUBJECT_PREFIX}*/*.[A-Z]*.[0-9]*.csv"
+):
     logger.info("Collecting files for processing...")
     num_files = 0
     raw_files = {}
-    for file in data_dir.glob(file_glob):
-        name_parts = file.name.split(".")
-        session = PurePath(".".join(name_parts[:-3] + name_parts[-2:]))
+
+    for file_path in data_dir.glob(file_glob):
+        subject = file_path.parent.name.replace(DIR_SUBJECT_PREFIX, "")
+        datetime, _, chunk = file_path.stem.split(".")
+        session = PurePath(".".join([subject, datetime, chunk]))
         if session not in raw_files:
             raw_files[session] = []
-        raw_files[session].append(file)
+        raw_files[session].append(file_path)
         num_files += 1
 
     for session in raw_files:
@@ -58,11 +64,9 @@ def get_renamer(s, i):
 
 def load_session_data(files, aux_channel=None, rename=True):
     logger.debug("Loading session data...")
-    num_files = len(files)
-    data = [None] * num_files
+    data = [None] * len(files)
     eeg_data = None
-    for i in range(num_files):
-        datafile = files[i]
+    for i, datafile in enumerate(files):
         logger.debug(f"Reading {datafile} to dataframe...")
         source = datafile.name.split(".")[-3]
         df = pd.read_csv(datafile, index_col=0)
@@ -108,7 +112,7 @@ def merge_sources(data, reindex=None):
 
     last = 0
     markers = []
-    for index in merged.index[(merged[marker_cols] == 1).any(axis=1)]:
+    for index in merged.index[(merged[marker_cols] == MARKER_USER_RECOVER).any(axis=1)]:
         if index - last < DEBOUNCE_SECONDS:
             logger.debug(
                 f"Debouncing recovery {index}, within {DEBOUNCE_SECONDS} sec of {last}"
@@ -162,6 +166,7 @@ def get_session_epochs(merged_df, session):
     return session_epochs
 
 
+# TODO: Support splitting by subject or session
 def split_epochs(epochs, val_split, test_split):
     num_epochs = len(epochs)
     test_ix = int((1 - test_split) * num_epochs)
@@ -178,10 +183,15 @@ def split_epochs(epochs, val_split, test_split):
 
 
 def move_files(files, dest_dir):
-    if not dest_dir.exists():
-        dest_dir.mkdir()
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    created_dirs = set()
     for file in files:
-        file.rename(dest_dir / file.name)
+        # Preserve subject subdirectory
+        file_dest = dest_dir / file.parent.name
+        if file_dest not in created_dirs:
+            file_dest.mkdir(exist_ok=True)
+            created_dirs.add(file_dest)
+        file.rename(file_dest / file.name)
 
 
 def process_session_data(
@@ -193,7 +203,7 @@ def process_session_data(
     epochs_dir = output_dir / DIR_EPOCHS
     if not epochs_dir.exists():
         logger.debug(f"{epochs_dir} does not exist. Creating...")
-        epochs_dir.mkdir()
+        epochs_dir.mkdir(parents=True)
 
     epochs = []
     processed_files = []

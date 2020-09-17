@@ -36,7 +36,10 @@ Filename prefix for recorded data. If you supply a value like `filename.csv`, ch
 **`-p, --probes MEAN [STD]`**  
 Sample user focus with audio probes. Provide one number X to sample every X minutes. Provide two numbers MEAN, STD to sample every Gaussian(MEAN, STD) minutes. Default is not to use probes.
 
-**`-s, --skip-visualize`**  
+**`-s, --subject-id STRING`**  
+Unique identifier for the current subject, to be included in session info.
+
+**`-no-visualize`**  
 By default, a stability check is conducted after a connection is established. The streaming data is displayed and recording does not start until the signal stabilizes.
 
 **`-t, --test`**  

@@ -147,8 +147,7 @@ def build_and_train_model(
     **train_kwargs,
 ):
     model_dir = Path(model_dir).resolve()
-    if not model_dir.exists():
-        model_dir.mkdir()
+    model_dir.mkdir(parents=True, exist_ok=True)
     logger.debug(f"Model files will be saved to {model_dir}")
 
     datasets, features_raw = read_dataset(

@@ -5,6 +5,7 @@ from time import gmtime, strftime
 from .constants import (
     DIR_DATA_DEFAULT,
     DIR_INPUT,
+    DIR_SUBJECT_PREFIX,
     DIR_TEST,
     PREPROCESS_EXTRACT_EEG,
     PREPROCESS_NONE,
@@ -72,12 +73,17 @@ def record_setup_parser(parser):
     )
     parser.add_argument(
         "-s",
-        "--skip-visualize",
-        action="store_true",
-        default=False,
+        "--subject-id",
+        default="1",
+        help="Unique identifier for the current subject, to be included in session info.",
+    )
+    parser.add_argument(
+        "--no-visualize",
+        action="store_false",
+        default=True,
+        dest="visualize",
         help="Skip visualization and stability check",
     )
-    # TODO: Add subject argument
     file_group = parser.add_mutually_exclusive_group()
     file_group.add_argument(
         "-f", "--filename", help="Filename for recorded data",
@@ -100,10 +106,10 @@ def record_run(args):
     if args.filename:
         args.filename = Path.cwd() / args.filename
     else:
-        # TODO: Include subject
         args.filename = (
             DIR_DATA_DEFAULT
             / args.data_dir
+            / f"{DIR_SUBJECT_PREFIX}{args.subject_id}"
             / f'{strftime("%Y-%m-%d_%H-%M-%S", gmtime())}.csv'
         )
 
@@ -116,7 +122,7 @@ def record_run(args):
 
     if not start_stream(args.address, args.sources):
         exit(1)
-    if not args.skip_visualize:
+    if args.visualize:
         visualize()
 
     run_session(get_duration(args.DURATION), args.sources, args.filename, probes=args.probes)
