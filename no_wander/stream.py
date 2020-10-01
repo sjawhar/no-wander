@@ -41,6 +41,9 @@ def start_stream(address, sources, confirm=True, restart=False):
         if len(stream_data["args"]) == 2:
             (address, sources) = stream_data["args"]
 
+    if type(sources) is not list or len(sources) == 0:
+        raise ValueError("No stream sources provided")
+
     if address is None:
         logger.info("No address provided, searching for muses...")
         muses = list_muses()
@@ -103,9 +106,13 @@ class Canvas(MuseCanvas):
         super().__init__(lsl_inlet, scale, filt)
 
     def on_draw(self, event):
-        max_quality = max(float(q.text) for q in self.quality)
-        logger.debug("Signal quality is %.2f" % max_quality)
-        if max_quality > SIGNAL_QUALITY_THRESHOLD:
+        try:
+            max_quality = max(float(q.text) for q in self.quality)
+            logger.debug(f"Signal quality is {max_quality:.2f}")
+        except ValueError:
+            max_quality = None
+
+        if max_quality is None or max_quality > SIGNAL_QUALITY_THRESHOLD:
             logger.debug("Signal quality poor, counter reset")
             self.quality_count = 0
         else:
