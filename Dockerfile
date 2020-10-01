@@ -43,7 +43,9 @@ RUN apt-get update \
  && apt-get install -y \
         git \
         python3-pip \
- && pip3 install pipenv==2020.8.13
+ && pip3 install --upgrade \
+        pip \
+        pipenv==2020.8.13
 
 WORKDIR /app
 RUN chown muselsl:muselsl .

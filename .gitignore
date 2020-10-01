@@ -244,3 +244,4 @@ models/**/*
 notebooks/tmp*.ipynb
 notebooks/*.png
 *.code-workspace
+.venv

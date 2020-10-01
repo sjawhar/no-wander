@@ -4,6 +4,8 @@ services:
 
   pipenv:
     image: sjawhar/no-wander:record-dev
+    environment:
+      PIPENV_VENV_IN_PROJECT: '1'
     volumes:
       - .:/app
     working_dir: /app
