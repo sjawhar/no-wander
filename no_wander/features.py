@@ -1,5 +1,7 @@
+import logging
 import re
 
+from scipy.signal import butter, lfilter, lfilter_zi
 import numpy as np
 
 from .constants import (
@@ -18,6 +20,10 @@ FREQ_BANDS = [
     ["gamma1", 30],
     ["gamma2", 65],
 ]
+NOTCH_B, NOTCH_A = butter(4, np.array([55, 65]) / (256 / 2), btype="bandstop")
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_data_by_feature_name(X_raw, features, pattern):
@@ -269,3 +275,14 @@ def preprocess_data_test(X_raw, preprocessor):
         )
         return X
     raise ValueError(f"Unknown preprocessing type {preprocess}")
+
+
+def notch_filter(data, filter_state=None):
+    logger.debug("Notch filtering data...")
+    if filter_state is None:
+        filter_state = np.tile(lfilter_zi(NOTCH_B, NOTCH_A), (data.shape[1], 1)).T
+
+    data, filter_state = lfilter(NOTCH_B, NOTCH_A, data, axis=0, zi=filter_state)
+
+    logger.debug("Notch filtering complete!")
+    return data, filter_state
