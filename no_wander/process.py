@@ -195,7 +195,12 @@ def move_files(files, dest_dir):
 
 
 def process_session_data(
-    raw_files, output_dir, aux_channel=None, limit=None, test_split=0.2, val_split=0.2,
+    raw_files,
+    output_dir,
+    aux_channel=None,
+    limit=None,
+    test_split=0.2,
+    val_split=0.2,
 ):
     if not len(raw_files):
         return

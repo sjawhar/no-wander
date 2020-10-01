@@ -139,6 +139,7 @@ def build_and_train_model(
     dropout=0,
     encode_position=False,
     output={},
+    plot_model=True,
     # Data prep params
     post_window=WINDOW_POST_RECOVERY,
     pre_window=WINDOW_PRE_RECOVERY,
@@ -180,7 +181,7 @@ def build_and_train_model(
         dropout=dropout,
         encode_position=encode_position,
         output=output,
-        plot_model_file=model_dir / "model.png",
+        plot_model_file=model_dir / "model.png" if plot_model is True else None,
     )
     model.summary()
 

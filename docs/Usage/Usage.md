@@ -39,7 +39,7 @@ Sample user focus with audio probes. Provide one number X to sample every X minu
 **`-s, --subject-id STRING`**  
 Unique identifier for the current subject, to be included in session info.
 
-**`-no-visualize`**  
+**`--no-visualize`**  
 By default, a stability check is conducted after a connection is established. The streaming data is displayed and recording does not start until the signal stabilizes.
 
 **`-t, --test`**  
@@ -83,7 +83,7 @@ Percentage of data to reserve for validation. Default is 0.2
 **`-t, --test-split FLOAT`**  
 Percentage of data to reserve for final testing. Default is 0.2
 
-**`-x, --aux-channel STRING`**
+**`-x, --aux-channel STRING`**  
 Channel name for Right Aux. Must be provided if Right Aux has data, otherwise channel is dropped.
 
 ### Train
@@ -110,7 +110,7 @@ Number of segments per LSTM sequence
 JSON array of layers with params. `type` controls layer type. `ic_params` controls IC layer after activation. Include a `pool` attribute of kwargs in a Conv1D layer to add a MaxPooling1D layer before the IC layer. A single layer controlled by `--output` is automatically added after all specified layers.
 
 #### Optional Arguments
-**`--o, --output JSON`**
+**`--o, --output JSON`**  
 JSON object overriding default output layer specification. Default is a single-unit Dense layer with sigmoid activation. Do **NOT** include `type` or `name` in the layer specification.
 
 **`--pre-window FLOAT FLOAT`**  
@@ -119,10 +119,16 @@ Start and end of pre-recovery window, in seconds. Should be negative numbers. De
 **`--post-window FLOAT FLOAT`**  
 Start and end of post-recovery window, in seconds. Default is `0 3`
 
-**`-p, --preprocess`**  
-Type of preprocessing to perform on input data. Valid options are "extract-eeg", "normalize", and "none". Default is "none".
+**`-x, --extract-eeg`**  
+Only use EEG channels, and perform time, frequency, and other feature extraction
 
-**`--encode-position`**
+**`-n, --normalize`**  
+Z-score each feature
+
+**`-m, --match STRING`**  
+Only include features with names matching this pattern
+
+**`--encode-position`**  
 Add positional encoding to input, before dropout. Default is false
 
 **`--dropout`**  
@@ -157,6 +163,9 @@ Save TensorBoard logs every epoch. Default is false
 
 **`-g, --gradient-metrics`**  
 Print metrics in Gradient chart format every epoch. Default is false
+
+**`--no-plot-model`**  
+Don't save PNG of model architecture
 
 #### Specifying Layers
 `--layers` should be list of objects in JSON format, where each object in the list contains the specification of a single layer. The `type` key in each object must correspond to the name of a Layer class in `tensorflow.keras.layers`. To create only one layer, you can also use a single JSON object instead of an array of length 1. Please refer to the YAML files in the .ps_project folder for examples.

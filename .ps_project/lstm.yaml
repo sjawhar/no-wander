@@ -14,7 +14,7 @@ command: |
     ]' \
     --segment-size 16 \
     --sequence-size 48 \
-    --preprocess=normalize \
+    --normalize \
     --epochs 250 \
     --gradient-metrics \
     /storage/no-wander/data/1572178629-1584963221-train.h5 \

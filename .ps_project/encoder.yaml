@@ -14,7 +14,7 @@ command: |
     ]' \
     --segment-size 3 \
     --sequence-size 256 \
-    --preprocess=normalize \
+    --normalize \
     --encode-position \
     --epochs 150 \
     --gradient-metrics \

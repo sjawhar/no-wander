@@ -2,6 +2,7 @@ import json
 import logging
 from pathlib import Path
 from time import gmtime, strftime
+
 from .constants import (
     DIR_DATA_DEFAULT,
     DIR_INPUT,
@@ -86,7 +87,9 @@ def record_setup_parser(parser):
     )
     file_group = parser.add_mutually_exclusive_group()
     file_group.add_argument(
-        "-f", "--filename", help="Filename for recorded data",
+        "-f",
+        "--filename",
+        help="Filename for recorded data",
     )
     file_group.add_argument(
         "-t",
@@ -138,7 +141,10 @@ def process_setup_parser(parser):
         help="Directory containing data files",
     )
     parser.add_argument(
-        "-l", "--limit", type=int, help="Limit the number of processed files",
+        "-l",
+        "--limit",
+        type=int,
+        help="Limit the number of processed files",
     )
     parser.add_argument(
         "-s",
@@ -176,7 +182,7 @@ def process_run(args):
 
 
 def train_setup_parser(parser):
-    parser.set_defaults(allow_unknown_args=True)
+    parser.set_defaults(allow_unknown_args=True, preprocess=PREPROCESS_NONE)
     parser.add_argument("DATA_FILE", help="Path to h5 file with labeled epochs")
     parser.add_argument(
         "MODEL_DIR", help="Directory in which to save built model and images"
@@ -222,6 +228,13 @@ def train_setup_parser(parser):
         ),
     )
     parser.add_argument(
+        "--no-plot-model",
+        action="store_false",
+        default=True,
+        dest="plot_model",
+        help="Don't save PNG of model architecture",
+    )
+    parser.add_argument(
         "--pre-window",
         type=float,
         nargs=2,
@@ -233,11 +246,29 @@ def train_setup_parser(parser):
         nargs=2,
         help="Start and end of post-recovery window, in seconds.",
     )
-    parser.add_argument(
-        "-p",
-        "--preprocess",
-        choices=[PREPROCESS_EXTRACT_EEG, PREPROCESS_NONE, PREPROCESS_NORMALIZE],
-        help="Type of preprocessing to perform on input data",
+    preprocess_group = parser.add_mutually_exclusive_group()
+    preprocess_group.add_argument(
+        "-x",
+        "--extract-eeg",
+        action="store_const",
+        const=PREPROCESS_EXTRACT_EEG,
+        dest="preprocess",
+        help="Only use EEG channels, and perform time, frequency, and other feature extraction.",
+    )
+    preprocess_group.add_argument(
+        "-n",
+        "--normalize",
+        action="store_const",
+        const=PREPROCESS_NORMALIZE,
+        dest="preprocess",
+        help="Z-score each feature",
+    )
+    preprocess_group.add_argument(
+        "-m",
+        "--match",
+        type=str,
+        dest="preprocess",
+        help="Only include features with names matching this pattern",
     )
     parser.add_argument(
         "--encode-position",
@@ -246,7 +277,9 @@ def train_setup_parser(parser):
         help="Add positional encoding to input, before dropout",
     )
     parser.add_argument(
-        "--dropout", type=float, help="Dropout rate for input",
+        "--dropout",
+        type=float,
+        help="Dropout rate for input",
     )
     parser.add_argument(
         "--learning-rate", type=float, help="learning_rate parameter for optimizer"

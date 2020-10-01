@@ -1,6 +1,10 @@
+import re
+
 import numpy as np
+
 from .constants import (
     PREPROCESS_EXTRACT_EEG,
+    PREPROCESS_MATCH,
     PREPROCESS_NONE,
     PREPROCESS_NORMALIZE,
     SAMPLE_RATE,
@@ -16,9 +20,15 @@ FREQ_BANDS = [
 ]
 
 
+def get_data_by_feature_name(X_raw, features, pattern):
+    regex = re.compile(pattern)
+    features_match = [col for col in features if regex.search(col)]
+    return X_raw[:, :, np.isin(features, features_match)], features_match
+
+
 def get_eeg_data(X_raw, features):
-    features_eeg = [col for col in features if "EEG_" in col]
-    X_eeg = np.nan_to_num(X_raw[:, :, np.isin(features, features_eeg)], 0)
+    X_eeg, features_eeg = get_data_by_feature_name(X_raw, features, "EEG_")
+    X_eeg = np.nan_to_num(X_eeg, 0)
     # For most of our EEG feature extractors, it's easier to reason about the computation
     # if the array is (epochs, channels, time)
     X_eeg = X_eeg.swapaxes(2, 1)
@@ -56,7 +66,8 @@ def extract_time_features(X):
         ),
     ]
     X_enriched = np.concatenate(
-        [enrich(X, axis=-1, **kwargs) for (_, enrich, kwargs) in enrichers], axis=-1,
+        [enrich(X, axis=-1, **kwargs) for (_, enrich, kwargs) in enrichers],
+        axis=-1,
     )
 
     return X_enriched, None, [feat for (feat, _, _) in enrichers]
@@ -228,7 +239,13 @@ def preprocess_data_train(X_raw, preprocess, features_raw):
     elif preprocess == PREPROCESS_NORMALIZE:
         X, scaler = normalize_data(X_raw)
         return X, {**preprocessor, **scaler}, features_raw, False
-    raise ValueError(f"Unknown preprocessing type {preprocess}")
+
+    X, features = get_data_by_feature_name(X_raw, features_raw, preprocess)
+    if len(features) == 0:
+        raise ValueError(f"No features found matching {preprocess}")
+
+    preprocessor.update(match=preprocess, preprocess=PREPROCESS_MATCH)
+    return X, preprocessor, features, False
 
 
 def preprocess_data_test(X_raw, preprocessor):
@@ -246,4 +263,9 @@ def preprocess_data_test(X_raw, preprocessor):
     elif preprocess == PREPROCESS_NORMALIZE:
         scaler = preprocessor["scaler"]
         return scaler.transform(X_raw.reshape(-1, X_raw.shape[-1])).reshape(X_raw.shape)
+    elif preprocess == PREPROCESS_MATCH:
+        X, _ = get_data_by_feature_name(
+            X_raw, preprocessor["features_raw"], preprocessor["match"]
+        )
+        return X
     raise ValueError(f"Unknown preprocessing type {preprocess}")

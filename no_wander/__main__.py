@@ -17,7 +17,11 @@ logging.basicConfig(level=logging.WARNING)
 
 def add_shared_args(parser):
     parser.add_argument(
-        "-v", "--verbose", action="count", default=0, help="Enable verbose logging",
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Enable verbose logging",
     )
     parser.add_argument("--debug", action="store_true")
 
