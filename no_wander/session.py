@@ -1,13 +1,18 @@
-import logging
 from multiprocessing import Process, Pipe, Queue
 from pathlib import Path
+from time import time
+import logging
+import pickle
+
 from psychopy import core, event, sound, visual
 from pylsl import StreamInfo, StreamOutlet, IRREGULAR_RATE
-from time import time
-from .record import record_signals
+import numpy as np
+
+from .record import monitor_signals, record_signals
 from .stream import start_stream
 from .constants import (
     DIR_ASSETS,
+    EVENT_NEW_SEGMENT,
     EVENT_RECORD_CHUNK_START,
     EVENT_SESSION_END,
     EVENT_STREAMING_ERROR,
@@ -17,7 +22,6 @@ from .constants import (
     MARKER_USER_FOCUS,
     MARKER_USER_RECOVER,
 )
-
 
 KEYS_QUIT = ["esc", "q"]
 KEYS_RECOVERY = ["up", "right", "space"]
@@ -69,9 +73,9 @@ def get_probe_intervals(duration, probes):
     return intervals
 
 
-def handle_signals_message(message, outlet):
-    """Return message to pass back to signal process, else None"""
-    logger.debug(f"Received {message} from signal recording")
+def handle_record_message(message, marker_outlet):
+    """Return message to pass back to recording process, else None"""
+    logger.debug(f"Received {message} from recording process")
     if message[0] == EVENT_STREAMING_ERROR:
         # TODO: Handle case where stream never starts
         start_stream(None, None, confirm=False, restart=True)
@@ -83,33 +87,93 @@ def handle_signals_message(message, outlet):
         # Insert sample to ensure recording file is saved properly
         # Also helps synchronize multiple recording sources
         logger.debug(f"Pushing sync marker at {message[1]}")
-        outlet.push_sample([MARKER_SYNC], message[1])
+        marker_outlet.push_sample([MARKER_SYNC], message[1])
 
     return None
 
 
-def handle_keypress(keys, outlet):
+def handle_keypress(keys, marker_outlet):
     """Return True to indicate recording should be ended, otherwise False"""
     quit = False
     for key, timestamp in keys:
         logger.debug(f"{key} pressed at time {timestamp}")
         if key in KEYS_RECOVERY:
-            outlet.push_sample([MARKER_USER_RECOVER], timestamp)
+            marker_outlet.push_sample([MARKER_USER_RECOVER], timestamp)
             continue
         elif key in KEYS_FOCUS:
-            outlet.push_sample([MARKER_USER_FOCUS], timestamp)
+            marker_outlet.push_sample([MARKER_USER_FOCUS], timestamp)
             continue
         elif key not in KEYS_QUIT:
             continue
 
         logger.info(f"{key} pressed, ending user input recording")
-        outlet.push_sample([MARKER_SYNC], timestamp)
+        marker_outlet.push_sample([MARKER_SYNC], timestamp)
         quit = True
 
     return quit
 
 
-def run_session(duration, sources, filepath, probes=None):
+def get_monitor_message_handler(sources, model, preprocessor, confidence_threshold):
+    source_offsets = {}
+    num_channels = 0
+    for source, channels in sources.items():
+        source_offsets[source] = num_channels
+        num_channels += len(channels)
+
+    input_shape = model.input_shape[1:]
+    window_info = input_shape[0]
+
+    def _handle(message, marker_outlet):
+        nonlocal window_info
+        _, source, data_segment, timestamps = message
+
+    return _handle
+
+
+def setup_monitoring(
+    model,
+    sources,
+    duration,
+    conn_monitor_slave,
+    confidence_threshold=0.5,
+    preprocessor=None,
+    **kwargs,
+):
+    from .models import load_model
+
+    model = load_model(model)
+    if preprocessor is not None:
+        with preprocessor as f:
+            preprocessor = pickle.load(f)
+
+    handle_message = get_monitor_message_handler(
+        sources, model, preprocessor, confidence_threshold
+    )
+
+    monitor_process = Process(
+        target=monitor_signals,
+        args=(sources, duration, conn_monitor_slave),
+        kwargs=kwargs,
+    )
+
+    return monitor_process, handle_message
+
+
+def run_session(sources, duration, filepath, monitor=False, probes=None, **kwargs):
+    session_window = visual.Window(fullscr=True, color=-1)
+    text = visual.TextStim(
+        session_window,
+        "If you can read this, you're not meditating!",
+        color=[1, 1, 1],
+    )
+    text.draw()
+    session_window.flip()
+    play_sound(SOUND_SESSION_BEGIN, wait=False)
+
+    clock = core.Clock()
+    clock.reset(-time())
+    logger.debug(f"Starting recording at {clock.getTime()}")
+
     info = StreamInfo(
         name="Markers",
         type="Markers",
@@ -118,26 +182,27 @@ def run_session(duration, sources, filepath, probes=None):
         channel_format="int32",
         source_id=filepath.name,
     )
-    outlet = StreamOutlet(info)
+    marker_outlet = StreamOutlet(info)
 
-    session_window = visual.Window(fullscr=True, color=-1)
-    text = visual.TextStim(
-        session_window, "If you can read this, you're not meditating!", color=[1, 1, 1],
+    conn_record_master, conn_record_slave = Pipe()
+    record_process = Process(
+        target=record_signals, args=(sources, duration, conn_record_slave, filepath)
     )
-    text.draw()
-    session_window.flip()
-    play_sound(SOUND_SESSION_BEGIN, wait=False)
+    record_process.start()
 
-    clock = core.Clock()
-    start_time = time()
-    clock.reset(-start_time)
-    logger.debug(f"Starting recording at {start_time}")
-
-    signals_conn, conn = Pipe()
-    signals_process = Process(
-        target=record_signals, args=(duration, sources, filepath, conn),
-    )
-    signals_process.start()
+    handlers = [(conn_record_master, handle_record_message)]
+    monitor_process = None
+    if monitor is True:
+        conn_monitor_master, conn_monitor_slave = Pipe()
+        monitor_process, handle_monitor_message = setup_monitoring(
+            kwargs.pop("model"),
+            sources,
+            duration,
+            conn_monitor_slave,
+            **kwargs,
+        )
+        monitor_process.start()
+        handlers.append((conn_monitor_master, handle_monitor_message))
 
     next_probe_time = None
     if probes is not None:
@@ -149,19 +214,13 @@ def run_session(duration, sources, filepath, probes=None):
             f"First of {1 + len(probe_times)} audio probes at {next_probe_time}"
         )
 
-    while signals_process.is_alive():
-        try:
-            if signals_conn.poll():
-                message = handle_signals_message(signals_conn.recv(), outlet)
-                if message is not None:
-                    signals_conn.send(message)
-
+    try:
+        while record_process.is_alive():
             keys = event.getKeys(timeStamped=clock)
-            if keys is not None and handle_keypress(keys, outlet) is True:
+            if keys is not None and handle_keypress(keys, marker_outlet) is True:
                 logger.info("Triggering end of session")
-                # TODO: Close session window on early end
-                signals_conn.send([EVENT_SESSION_END])
-                signals_process.join()
+                conn_record_master.send([EVENT_SESSION_END])
+                record_process.join()
                 logger.info("Session ended")
                 break
 
@@ -171,13 +230,28 @@ def run_session(duration, sources, filepath, probes=None):
                 next_probe_time = None if len(probe_times) == 0 else probe_times.pop()
                 logger.debug(f"Audio probe played. Next probe at {next_probe_time}")
 
-        except KeyboardInterrupt:
-            break
+            for conn, handle_message in handlers:
+                if not conn.poll():
+                    continue
+
+                response = handle_message(conn.recv(), marker_outlet)
+                if response is None:
+                    continue
+                conn.send(response)
+
+    except KeyboardInterrupt:
+        logger.info("Keyboard interrupt, stopping session")
 
     play_sound(SOUND_SESSION_END)
     session_window.close()
 
-    if signals_process.is_alive():
-        signals_process.terminate()
-    signals_conn.close()
+    if record_process.is_alive():
+        record_process.terminate()
+
+    if monitor is True:
+        if monitor_process.is_alive():
+            monitor_process.terminate()
+        conn_monitor_slave.close()
+
+    conn_record_master.close()
     core.quit()

@@ -109,7 +109,7 @@ def record_setup_parser(parser, add_source_args=True):
     )
 
 
-def record_run(args):
+def record_run(args, monitor=False, **kwargs):
     from .session import get_duration, run_session
     from .stream import end_stream, start_stream, visualize
 
@@ -139,7 +139,14 @@ def record_run(args):
     if args.visualize:
         visualize()
 
-    run_session(get_duration(args.duration), args.sources, args.filename, probes=args.probes)
+    run_session(
+        args.sources,
+        get_duration(args.duration),
+        args.filename,
+        monitor=monitor,
+        probes=args.probes,
+        **kwargs,
+    )
     end_stream()
 
 

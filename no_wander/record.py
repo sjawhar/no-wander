@@ -24,7 +24,7 @@ CHUNK_DURATION_MIN = 10
 logger = logging.getLogger(__name__)
 
 
-def record_signals(duration, sources, filepath, conn):
+def record_signals(sources, duration, conn, filepath):
     filename_parts = filepath.name.split(".")
     # Filename format: NAME.SOURCE.CHUNK_NUM.EXT
     filename_parts = filename_parts[:-1] + [""] * 2 + filename_parts[-1:]

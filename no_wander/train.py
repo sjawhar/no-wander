@@ -1,18 +1,19 @@
-import logging
-import numpy as np
-import pickle
 from pathlib import Path
+import logging
+import pickle
+
 from sklearn.model_selection import train_test_split
+import numpy as np
+
 from .datasets import read_dataset, DATASET_TRAIN, DATASET_VAL
 from .features import preprocess_data_test, preprocess_data_train
 from .models import compile_model, fit_model, get_model_from_layers
-from .constants import PREPROCESS_NONE
+from .constants import PREPROCESS_NONE, RANDOM_SEED
 
 LEARNING_RATE = 0.1
 BETA_ONE = 0.9
 BETA_TWO = 0.999
 DECAY = 0.01
-RANDOM_SEED = 42
 WINDOW_POST_RECOVERY = (0, 3)
 WINDOW_PRE_RECOVERY = (-7, -1)
 

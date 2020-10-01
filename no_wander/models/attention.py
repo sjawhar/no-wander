@@ -4,10 +4,6 @@ import os
 import tensorflow as tf
 
 os.environ["TF_KERAS"] = "1"
-from keras_multi_head import MultiHeadAttention
-from keras_pos_embd import TrigPosEmbedding
-from keras_position_wise_feed_forward import FeedForward
-from tensorflow.keras.layers import Add, Dropout, LayerNormalization
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +11,8 @@ logger = logging.getLogger(__name__)
 def wrap_residual_with_dropout(
     input_layer, name, NextLayer, dropout, epsilon, **kwargs
 ):
+    from tensorflow.keras.layers import Add, Dropout, LayerNormalization
+
     logger.debug(f'Adding layer "{name}" - {NextLayer.__name__} w/ residual: {kwargs}')
     next_layer = NextLayer(name=name, **kwargs)(input_layer)
     if dropout:
@@ -33,6 +31,9 @@ def add_encoder_layer(
     ff_units=1000,
     num_heads=8,
 ):
+    from keras_multi_head import MultiHeadAttention
+    from keras_position_wise_feed_forward import FeedForward
+
     attention_layer = wrap_residual_with_dropout(
         input_layer,
         f"{name}_mha",
@@ -57,4 +58,6 @@ def add_encoder_layer(
 
 
 def add_position_encoding(input_layer, name):
+    from keras_pos_embd import TrigPosEmbedding
+
     return TrigPosEmbedding(name=name, mode=TrigPosEmbedding.MODE_ADD)(input_layer)
