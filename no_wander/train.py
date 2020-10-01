@@ -19,33 +19,33 @@ WINDOW_PRE_RECOVERY = (-7, -1)
 logger = logging.getLogger(__name__)
 
 
-def get_sequences(samples, labels, input_shape, shuffle_samples):
+def get_sequences(segments, labels, input_shape, shuffle_segments):
     sequence_size = input_shape[0]
     logger.info(f"Forming sequences of length {sequence_size}...")
-    if shuffle_samples:
-        logger.debug("Shuffling samples...")
+    if shuffle_segments:
+        logger.debug("Shuffling segments...")
         np.random.seed(RANDOM_SEED)
-        shuffle = np.random.permutation(samples.shape[0])
-        samples = samples[shuffle]
+        shuffle = np.random.permutation(segments.shape[0])
+        segments = segments[shuffle]
         labels = labels[shuffle]
 
     X = []
     for label, label_name in [(0, "miss"), (1, "hit")]:
-        X_label = samples[(labels == label).flatten()]
-        num_samples = X_label.shape[0]
-        rem = num_samples % sequence_size
+        X_label = segments[(labels == label).flatten()]
+        num_segments = X_label.shape[0]
+        rem = num_segments % sequence_size
         if rem > 0:
-            if shuffle_samples:
+            if shuffle_segments:
                 pad = np.random.choice(
-                    num_samples, size=(sequence_size - rem), replace=False
+                    num_segments, size=(sequence_size - rem), replace=False
                 )
                 X_label = np.concatenate([X_label, X_label[pad]], axis=0)
                 logger.debug(
-                    f"Padded {label_name} with {len(pad)} samples for even sequences"
+                    f"Padded {label_name} with {len(pad)} segments for even sequences"
                 )
             else:
                 X_label = X_label[:-rem]
-                logger.debug(f"Dropped {rem} {label_name} samples for even sequences")
+                logger.debug(f"Dropped {rem} {label_name} segments for even sequences")
         X.append(X_label.reshape((-1, *input_shape)))
 
     miss_size = X[0].shape[0]
@@ -90,7 +90,7 @@ def train_model(
     X_val,
     Y_val,
     input_shape,
-    shuffle_samples=False,
+    shuffle_segments=False,
     # Optimizer params
     learning_rate=LEARNING_RATE,
     beta_one=BETA_ONE,
@@ -104,7 +104,7 @@ def train_model(
 ):
     compile_model(model, learning_rate, beta_one, beta_two, decay)
 
-    X, Y = get_sequences(X_train, Y_train, input_shape, shuffle_samples)
+    X, Y = get_sequences(X_train, Y_train, input_shape, shuffle_segments)
     validation_data = get_sequences(X_val, Y_val, input_shape, False)
     logger.info(
         f"Train on {len(X)} samples, validate on {len(validation_data[0])} samples"
@@ -133,7 +133,7 @@ def build_and_train_model(
     data_file,
     model_dir,
     # Model params
-    sample_size,
+    segment_size,
     sequence_size,
     layers,
     dropout=0,
@@ -143,7 +143,7 @@ def build_and_train_model(
     post_window=WINDOW_POST_RECOVERY,
     pre_window=WINDOW_PRE_RECOVERY,
     preprocess=PREPROCESS_NONE,
-    shuffle_samples=False,
+    shuffle_segments=False,
     **train_kwargs,
 ):
     model_dir = Path(model_dir).resolve()
@@ -152,8 +152,8 @@ def build_and_train_model(
 
     datasets, features_raw = read_dataset(
         data_file,
-        sample_size,
-        1 if shuffle_samples else sequence_size,
+        segment_size,
+        1 if shuffle_segments else sequence_size,
         pre_window,
         post_window,
     )
@@ -164,7 +164,7 @@ def build_and_train_model(
     samples_train, preprocessor, features, is_flattened = preprocess_data_train(
         samples_train, preprocess, features_raw
     )
-    input_shape = (sequence_size, len(features) * (1 if is_flattened else sample_size))
+    input_shape = (sequence_size, len(features) * (1 if is_flattened else segment_size))
     logger.info(f"Preprocessed features: {', '.join(features)}")
     logger.info(f"Input shape: {input_shape}")
 
@@ -195,7 +195,7 @@ def build_and_train_model(
             samples_val,
             labels_val,
             input_shape,
-            shuffle_samples=shuffle_samples,
+            shuffle_segments=shuffle_segments,
             **train_kwargs,
         )
 

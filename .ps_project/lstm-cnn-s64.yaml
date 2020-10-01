@@ -11,9 +11,9 @@ command: |
       {"type": "LSTM", "units": 256, "ic_params": {"dropout": 0.2, "batchnorm": true}},
       {"type": "Dense", "units": 32, "activation": "relu", "ic_params": {"dropout": 0.2, "batchnorm": true}}
     ]' \
-    --sample-size 64 \
+    --segment-size 64 \
     --sequence-size 12 \
-    --preprocess normalize \
+    --preprocess=normalize \
     --epochs 250 \
     --gradient-metrics \
     /storage/no-wander/data/1572178629-1584963221-train.h5 \

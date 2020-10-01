@@ -183,17 +183,17 @@ def train_setup_parser(parser):
     )
     parser.add_argument(
         "-s",
-        "--sample-size",
+        "--segment-size",
         type=int,
         required=True,
-        help="Number of readings/timesteps per sample",
+        help="Number of samples/readings/timesteps per segment",
     )
     parser.add_argument(
         "-q",
         "--sequence-size",
         type=int,
         required=True,
-        help="Number of samples per LSTM sequence",
+        help="Number of segments per LSTM sequence",
     )
     parser.add_argument(
         "-l",
@@ -259,10 +259,10 @@ def train_setup_parser(parser):
     )
     parser.add_argument("--decay", type=float, help="decay parameter for optimizer")
     parser.add_argument(
-        "--shuffle-samples",
+        "--shuffle-segments",
         action="store_true",
         default=None,
-        help="Shuffle samples before constructing LSTM sequences",
+        help="Shuffle segments before constructing LSTM sequences",
     )
     parser.add_argument(
         "-e", "--epochs", type=int, default=1, help="Number of training epochs"
@@ -302,7 +302,7 @@ def train_run(args, **kwargs):
     build_and_train_model(
         kwargs.pop("DATA_FILE"),
         kwargs.pop("MODEL_DIR"),
-        kwargs.pop("sample_size"),
+        kwargs.pop("segment_size"),
         kwargs.pop("sequence_size"),
         kwargs.pop("layers"),
         **kwargs,

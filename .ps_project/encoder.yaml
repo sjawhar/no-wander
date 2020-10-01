@@ -12,9 +12,9 @@ command: |
       {"type": "Dense", "units": 64, "activation": "relu", "ic_params": {"dropout": 0.2, "batchnorm": true}},
       {"type": "Dense", "units": 32, "activation": "relu", "ic_params": {"dropout": 0.2, "batchnorm": true}}
     ]' \
-    --sample-size 3 \
+    --segment-size 3 \
     --sequence-size 256 \
-    --preprocess normalize \
+    --preprocess=normalize \
     --encode-position \
     --epochs 150 \
     --gradient-metrics \

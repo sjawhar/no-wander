@@ -37,7 +37,7 @@ def parse_dataset(filepath, train_set=DATASET_TRAIN, test_set=DATASET_TEST):
     return datasets, features
 
 
-def get_window_samples(data, sample_size, consecutive_samples, window):
+def get_window_segments(data, segment_size, consecutive_segments, window):
     start, stop = window
     is_flip = stop <= 0
     if is_flip:
@@ -45,19 +45,19 @@ def get_window_samples(data, sample_size, consecutive_samples, window):
         data = data[::-1]
 
     data = data[start:stop]
-    drop = len(data) % (sample_size * consecutive_samples)
+    drop = len(data) % (segment_size * consecutive_segments)
     if drop > 0:
         data = data[:-drop]
 
-    samples = data.reshape(-1, sample_size, data.shape[1])
+    segments = data.reshape(-1, segment_size, data.shape[1])
     if is_flip:
-        samples = samples[::-1, ::-1]
-    return list(samples), drop
+        segments = segments[::-1, ::-1]
+    return list(segments), drop
 
 
-def get_samples(data, sample_size, consecutive_samples, pre_window, post_window):
+def get_segments(data, segment_size, consecutive_segments, pre_window, post_window):
     parsed = [None] * len(data)
-    num_samples = 0
+    num_segments = 0
 
     for i, (dset, recovery_ix, features) in enumerate(data):
         parsed[i] = [[], [], features]
@@ -65,23 +65,23 @@ def get_samples(data, sample_size, consecutive_samples, pre_window, post_window)
             (0, dset[:recovery_ix], pre_window, "pre"),
             (1, dset[recovery_ix:], post_window, "post"),
         ]:
-            window_samples, dropped = get_window_samples(
-                window_data, sample_size, consecutive_samples, window
+            window_segments, dropped = get_window_segments(
+                window_data, segment_size, consecutive_segments, window
             )
-            parsed[i][j] = window_samples
+            parsed[i][j] = window_segments
             if dropped > 0:
                 logger.debug(f"Dropped {dropped} readings from {window_name} window")
-            num_samples += len(window_samples)
+            num_segments += len(window_segments)
 
-    return parsed, num_samples
+    return parsed, num_segments
 
 
-def samples_to_tensors(samples, data_shape):
+def segments_to_tensors(segments, data_shape):
     X = np.full(data_shape, np.nan)
     Y = np.zeros((X.shape[0], 1))
 
     i = 0
-    for pre, post, features in samples:
+    for pre, post, features in segments:
         for window, label in [(pre, 0), (post, 1)]:
             window_size = len(window)
             if window_size == 0:
@@ -96,8 +96,8 @@ def samples_to_tensors(samples, data_shape):
 
 def read_dataset(
     filepath,
-    sample_size,
-    consecutive_samples,
+    segment_size,
+    consecutive_segments,
     pre_window,
     post_window,
     sample_rate=SAMPLE_RATE,
@@ -109,10 +109,12 @@ def read_dataset(
     data, features = parse_dataset(filepath, test_set=DATASET_VAL)
     datasets = {}
     for set_type in [DATASET_TRAIN, DATASET_VAL]:
-        samples, num_samples = get_samples(
-            data[set_type], sample_size, consecutive_samples, pre_window, post_window
+        segments, num_segments = get_segments(
+            data[set_type], segment_size, consecutive_segments, pre_window, post_window
         )
-        X, Y = samples_to_tensors(samples, (num_samples, sample_size, len(features)))
+        X, Y = segments_to_tensors(
+            segments, (num_segments, segment_size, len(features))
+        )
         logger.debug(f"{set_type} data shape {X.shape}")
         datasets[set_type] = (X, Y)
     return datasets, features

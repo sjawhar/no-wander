@@ -8,7 +8,7 @@ As mentioned above, perhaps the most uniquitous preprocessing step in ML is to c
 ### EEG-specific features
 Tsiouris et al. (2018)<sup>[[1](https://www.sciencedirect.com/science/article/pii/S001048251830132X#cebib0010)]</sup> explored the effectiveness of various features used across the EEG classification literature and showed them to improve the performance of an LSTM model over learning directly on raw input.
 
-Note that these features can be reduced to reduce the dimensionality of the data, if they are used _in place of_ rather than in addition to the raw EEG recording. For example, the number of dimensions in a 1 second sample from a 32-channel, 256 Hz recording is reduced from 8,192 dimensions to 1,652.
+Note that these features can be reduced to reduce the dimensionality of the data, if they are used _in place of_ rather than in addition to the raw EEG recording. For example, the number of dimensions in a 1 second segment from a 32-channel, 256 Hz recording is reduced from 8,192 dimensions to 1,652.
 
 #### Time domain
 | Feature                                       | Count         |
@@ -43,7 +43,7 @@ Note that these features can be reduced to reduce the dimensionality of the data
 The decorrelation time is the time to the first zero-crossing in a channel's autocorrelation function.
 
 #### Graph theory
-Each channel is a node in the sample's constructed graph, and the connection between nodes are weighted by the maximum time-lagged correlation between the corresponding channels in that sample.
+Each channel is a node in the segment's constructed graph, and the connection between nodes are weighted by the maximum time-lagged correlation between the corresponding channels in that segment.
 
 | Feature                     | Count         |
 | --------------------------- | ------------- |

@@ -214,6 +214,10 @@ def normalize_data(X_raw):
 
 
 def preprocess_data_train(X_raw, preprocess, features_raw):
+    """
+    Preprocess training data and save preprocessing parameters.
+    Expects X_raw to be of shape (segments, timesteps, features)
+    """
     preprocessor = {"preprocess": preprocess, "features_raw": features_raw}
 
     if preprocess == PREPROCESS_EXTRACT_EEG:
@@ -228,6 +232,10 @@ def preprocess_data_train(X_raw, preprocess, features_raw):
 
 
 def preprocess_data_test(X_raw, preprocessor):
+    """
+    Preprocess testing data according to saved preprocessing parameters.
+    Expects X_raw to be of shape (segments, timesteps, features)
+    """
     preprocess = preprocessor["preprocess"]
 
     if preprocess == PREPROCESS_EXTRACT_EEG:

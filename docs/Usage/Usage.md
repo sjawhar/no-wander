@@ -100,11 +100,11 @@ Path to h5 file with labeled epochs.
 Directory in which to save built model and images
 
 #### Required Arguments
-**`-s, --sample-size INT`**  
-Number of readings/timesteps per sample
+**`-s, --segment-size INT`**  
+Number of samples/readings/timesteps per segment
 
 **`-q, --sequence-size INT`**  
-Number of samples per LSTM sequence
+Number of segments per LSTM sequence
 
 **`-l, --layers JSON`**  
 JSON array of layers with params. `type` controls layer type. `ic_params` controls IC layer after activation. Include a `pool` attribute of kwargs in a Conv1D layer to add a MaxPooling1D layer before the IC layer. A single layer controlled by `--output` is automatically added after all specified layers.
@@ -140,8 +140,8 @@ Dropout rate for input. Default is 0
 **`--decay FLOAT`**  
 `decay` parameter for optimizer. Default is 0.01
 
-**`--shuffle-samples`**  
-Shuffle samples before constructing LSTM sequences
+**`--shuffle-segments`**  
+Shuffle segments before constructing LSTM sequences
 
 **`-e, --epochs INT`**  
 Number of training epochs. Default is 1
@@ -178,5 +178,5 @@ Each layer specification object can include one or more regularization parameter
   * `{"l1": 0.1, "l2": 0.2}` will create an `L1L2` regularizer with parameters `l1=0.1, l2=0.2`. You don't need to include both l1 and l2 values.
 
 #### Other Notes
-* If `--shuffle-samples` is not true, only samples belonging to contiguous sequences of length `--sequence-size` are used.
+* If `--shuffle-segments` is not true, only segments belonging to contiguous sequences of length `--sequence-size` are used.
 * If you include more flags in your command that are not listed above, they will be passed as kwargs to `model.fit()`.
