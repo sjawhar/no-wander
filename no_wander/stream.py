@@ -71,7 +71,9 @@ def start_stream(address, sources, confirm=True, restart=False):
             stream_process.daemon = True
             stream_process.start()
             stream_process.join(7)
-            if not stream_process.is_alive():
+
+            streams = resolve_byprop("type", sources[0], timeout=LSL_SCAN_TIMEOUT)
+            if len(streams) == 0:
                 logger.warning(f"Streaming attempt {attempt} failed.")
                 continue
 

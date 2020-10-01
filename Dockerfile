@@ -8,6 +8,13 @@ RUN PIP_PREFIX=${PACKAGES_DIR} \
     PIP_IGNORE_INSTALLED=1 \
     pipenv install --system --ignore-pipfile --deploy
 
+ARG LIBLSL_VERSION=1.13.1
+RUN apt-get update \
+ && apt-get install -y \
+        wget \
+ && wget https://github.com/sccn/liblsl/releases/download/${LIBLSL_VERSION}/liblsl-${LIBLSL_VERSION}-manylinux2010_x64.so \
+        -O ${PACKAGES_DIR}/lib/python3.7/site-packages/pylsl/liblsl64.so
+
 FROM sjawhar/muselsl as base
 USER root
 RUN apt-get update \

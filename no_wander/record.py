@@ -1,8 +1,11 @@
-import logging
+from math import ceil
 from multiprocessing import Process
-from muselsl import record
 from pathlib import PurePath
 from time import sleep, time
+import logging
+
+from muselsl import record
+
 from .constants import (
     EVENT_RECORD_CHUNK_START,
     EVENT_SESSION_END,
@@ -10,7 +13,7 @@ from .constants import (
     EVENT_STREAMING_RESTARTED,
 )
 
-
+CHUNK_DURATION_BUFFER = 10
 CHUNK_DURATION_MAX = 300
 CHUNK_DURATION_MIN = 10
 
@@ -58,8 +61,9 @@ def record_signals(duration, sources, filepath, conn):
             record_processes.append(process)
 
         # Recording process will terminate early if stream is broken. Detect and restart.
-        record_processes[0].join(CHUNK_DURATION_MIN)
-        if not record_processes[0].is_alive():
+        follow_process = record_processes[0]
+        follow_process.join(CHUNK_DURATION_BUFFER)
+        if not follow_process.is_alive():
             logger.warning("Error in stream. Restarting...")
             for process in record_processes:
                 process.terminate()
@@ -72,18 +76,17 @@ def record_signals(duration, sources, filepath, conn):
         dummy_timestamp = time()
         logger.debug(f"Signaling chunk start at {dummy_timestamp}")
         conn.send([EVENT_RECORD_CHUNK_START, dummy_timestamp])
-        record_processes[0].join(chunk_duration)
+        follow_process.join(chunk_duration)
 
-        # Give other recording processes a chance to end normally
-        if source_count > 1:
-            sleep(2)
-
-        for si in range(source_count):
-            if record_processes[si].is_alive():
-                logger.warning(
-                    f"{sources[si]} recording process has hung. Terminating..."
-                )
-                record_processes[si].terminate()
+        for source_idx, process in enumerate(record_processes):
+            # Give recording processes a chance to end normally
+            process.join(CHUNK_DURATION_BUFFER)
+            if not process.is_alive():
+                continue
+            logger.warning(
+                f"{sources[source_idx]} recording process has hung. Terminating..."
+            )
+            process.terminate()
 
         new_remaining = get_remaining()
         chunk_time = remaining - new_remaining
