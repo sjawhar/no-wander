@@ -1,3 +1,4 @@
+import argparse
 import json
 import logging
 from pathlib import Path
@@ -148,6 +149,77 @@ def record_run(args, monitor=False, **kwargs):
         **kwargs,
     )
     end_stream()
+
+
+def monitor_setup_parser(parser):
+    record_setup_parser(parser, add_source_args=False)
+    parser.set_defaults(allow_unknown_args=True)
+    parser.add_argument(
+        "MODEL",
+        help="Path to trained distraction detector",
+        type=Path,
+    )
+    parser.add_argument(
+        "-c",
+        "--confidence-threshold",
+        default=0.5,
+        help="Distraction detection confidence (between 0 and 1) needed to trigger feedback",
+        type=float,
+    )
+    parser.add_argument(
+        "--preprocessor",
+        default=None,
+        help="Path to pickle file containing information for how data is to be preprocessed before passing to the distraction detector.",
+        type=argparse.FileType("rb"),
+    )
+    parser.add_argument(
+        "--acc",
+        dest=SOURCE_ACC,
+        help="Record accelerometer and pass this list of channel indices to distraction detector.",
+        nargs="+",
+        type=int,
+    )
+    parser.add_argument(
+        "--eeg",
+        dest=SOURCE_EEG,
+        default=[0, 1, 2, 3],
+        help="Record EEG and pass this list of channel indices to distraction detector.",
+        nargs="+",
+        type=int,
+    )
+    parser.add_argument(
+        "--gyro",
+        dest=SOURCE_GYRO,
+        help="Record gyroscope and pass this list of channel indices to distraction detector.",
+        nargs="+",
+        type=int,
+    )
+    parser.add_argument(
+        "--ppg",
+        dest=SOURCE_PPG,
+        help="Record PPG and pass this list of channel indices to distraction detector.",
+        nargs="+",
+        type=int,
+    )
+
+
+def monitor_run(args, **kwargs):
+    args.sources = {}
+    for source in [SOURCE_ACC, SOURCE_EEG, SOURCE_GYRO, SOURCE_PPG]:
+        channels = getattr(args, source)
+        delattr(args, source)
+        if channels is None:
+            continue
+        args.sources[source] = channels
+
+    record_run(
+        args,
+        confidence_threshold=args.confidence_threshold,
+        model=args.MODEL,
+        monitor=True,
+        preprocessor=args.preprocessor,
+        **kwargs,
+    )
 
 
 def process_setup_parser(parser):

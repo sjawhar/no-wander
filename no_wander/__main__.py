@@ -2,6 +2,8 @@ import argparse
 import logging
 import sys
 from .cli import (
+    monitor_run,
+    monitor_setup_parser,
     process_run,
     process_setup_parser,
     record_run,
@@ -68,6 +70,12 @@ subparsers = parser.add_subparsers(title="commands", description="valid commands
 
 commands = [
     ("record", "Record meditation session", record_setup_parser, record_run),
+    (
+        "monitor",
+        "Run meditation session with feedback",
+        monitor_setup_parser,
+        monitor_run,
+    ),
     (
         "process",
         "Extract epochs from recorded sessions",

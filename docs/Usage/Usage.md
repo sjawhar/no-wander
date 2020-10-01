@@ -57,6 +57,37 @@ Record PPG measurements
 **`--no-eeg`**  
 Don't record EEG measurements
 
+### Monitor
+Runs a meditation session like `record`, but adds feedback from a trained distraction detection model.
+
+```bash
+monitor [arguments] MODEL
+```
+
+**`MODEL STRING`**  
+Path to trained distraction detector. The value can be either a Keras h5 file or a directory containing a TensorFlow SavedModel.
+
+#### Optional Arguments
+`monitor` accepts most of the same arguments as `record`, with a few additions and some modifications to the channel arguments.
+
+**`-c, --confidence-threshold FLOAT`**  
+Distraction detection confidence (between 0 and 1) needed to trigger feedback
+
+**`--preprocessor STRING`**  
+Path to pickle file containing information for how data is to be preprocessed before passing to the distraction detector.
+
+**`--acc INTEGER [INTEGER ...]`**  
+Record EEG and pass this list of channel indices to distraction detector.
+
+**`--eeg INTEGER [INTEGER ...]`**  
+Record accelerometer and pass this list of channel indices to distraction detector.
+
+**`--gyro INTEGER [INTEGER ...]`**  
+Record gyroscope and pass this list of channel indices to distraction detector.
+
+**`--ppg INTEGER [INTEGER ...]`**  
+Record PPG and pass this list of channel indices to distraction detector.
+
 ### Process
 Takes data files recorded using `record`, extracts recovery epochs, splits into train and test sets, and saves as datasets in h5 files. Each epoch includes the data 10 seconds before and after the recovery. If multiple data sources were recorded for a session chunk, they are combined in the saved dataset. Each dataset corresponds to an epoch and contains the following attributes:
 

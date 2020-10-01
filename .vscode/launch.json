@@ -5,11 +5,30 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Record: Monitor",
+      "name": "Monitor",
       "type": "python",
       "request": "launch",
       "module": "no_wander",
-      "args": ["record", "--monitor", "1"],
+      "args": ["monitor", "--duration", "1", "models/test/model_best"],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Train",
+      "type": "python",
+      "request": "launch",
+      "module": "no_wander",
+      "args": [
+        "train",
+        "--layers",
+        "{}",
+        "--segment-size=16",
+        "--sequence-size=48",
+        "--normalize",
+        "--epochs=10",
+        "data/epochs/1572178629-1584963221-train.h5",
+        "models/test"
+      ],
       "console": "integratedTerminal",
       "justMyCode": false
     },
