@@ -1,3 +1,4 @@
+import logging
 import re
 
 import numpy as np
@@ -18,6 +19,8 @@ FREQ_BANDS = [
     ["gamma1", 30],
     ["gamma2", 65],
 ]
+
+logger = logging.getLogger(__name__)
 
 
 def get_data_by_feature_name(X_raw, features, pattern):
