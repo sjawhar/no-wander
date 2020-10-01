@@ -17,7 +17,6 @@ from .constants import (
     SOURCE_PPG,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -25,42 +24,18 @@ def type_json(json_str):
     return json.loads(json_str)
 
 
-def record_setup_parser(parser):
+def record_setup_parser(parser, add_source_args=True):
     parser.add_argument(
-        "DURATION", type=int, help="Length of the meditation session in minutes",
+        "--duration",
+        "-d",
+        default=10,
+        help="Length of the meditation session in minutes",
+        type=int,
     )
     parser.add_argument(
-        "-a", "--address", help="Skip search and stream from specified address",
-    )
-    parser.add_argument(
-        "-c",
-        "--acc",
-        dest="sources",
-        action="append_const",
-        const=SOURCE_ACC,
-        help="Record accelerometer measurements",
-    )
-    parser.add_argument(
-        "--no-eeg",
-        dest="eeg",
-        action="store_false",
-        default=True,
-        help="Don't record EEG measurements",
-    )
-    parser.add_argument(
-        "-g",
-        "--gyro",
-        dest="sources",
-        action="append_const",
-        const=SOURCE_GYRO,
-        help="Record gyroscope measurements",
-    )
-    parser.add_argument(
-        "--ppg",
-        dest="sources",
-        action="append_const",
-        const=SOURCE_PPG,
-        help="Record PPG measurements",
+        "-a",
+        "--address",
+        help="Skip search and stream from specified address",
     )
     parser.add_argument(
         "-p",
@@ -101,6 +76,38 @@ def record_setup_parser(parser):
         help="Store data in test directory",
     )
 
+    if add_source_args is False:
+        return
+
+    parser.add_argument(
+        "--acc",
+        dest="sources",
+        action="append_const",
+        const=SOURCE_ACC,
+        help="Record accelerometer measurements",
+    )
+    parser.add_argument(
+        "--no-eeg",
+        dest=SOURCE_EEG,
+        action="store_false",
+        default=True,
+        help="Don't record EEG measurements",
+    )
+    parser.add_argument(
+        "--gyro",
+        dest="sources",
+        action="append_const",
+        const=SOURCE_GYRO,
+        help="Record gyroscope measurements",
+    )
+    parser.add_argument(
+        "--ppg",
+        dest="sources",
+        action="append_const",
+        const=SOURCE_PPG,
+        help="Record PPG measurements",
+    )
+
 
 def record_run(args):
     from .session import get_duration, run_session
@@ -118,17 +125,21 @@ def record_run(args):
 
     if not args.sources:
         args.sources = []
-    if args.eeg:
+    if getattr(args, SOURCE_EEG, False):
         args.sources.append(SOURCE_EEG)
 
     logger.debug(f"Starting command record with args {args}")
 
-    if not start_stream(args.address, args.sources):
+    stream_sources = args.sources
+    if type(stream_sources) is dict:
+        stream_sources = list(stream_sources.keys())
+    if not start_stream(args.address, stream_sources):
         exit(1)
+
     if args.visualize:
         visualize()
 
-    run_session(get_duration(args.DURATION), args.sources, args.filename, probes=args.probes)
+    run_session(get_duration(args.duration), args.sources, args.filename, probes=args.probes)
     end_stream()
 
 

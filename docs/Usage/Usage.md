@@ -20,15 +20,15 @@ Streams one or more of EEG, PPG, accelerometer, and gyroscope readings from the 
 This project uses the [muse-lsl](https://github.com/alexandrebarachant/muse-lsl) library to interact with the Muse headband. Due to the perculiarities of muse-lsl or one of its dependencies, recording will hang if the connection to the headband is lost while recording. This would case all data for that session to be lost. As a safeguard against this kind of catastrophic data loss, this project "chunks" a session into five-minute incremements that are each saved to a separate file. This mechanism will cause small recording gaps between each chunk of around 15 seconds.
 
 ```bash
-record [arguments] DURATION
+record [arguments]
 ```
-
-**`DURATION`**  
-Length of the meditation session, in minutes.
 
 #### Optional Arguments
 **`-a, --address STRING`**  
 By default, a Bluetooth search is conducted to find your Muse, and the first found device is used. This behavior can be overridden by specifying a MAC address from which to stream.
+
+**`-d, --duration INTEGER`**  
+Length of the meditation session, in minutes. Default is 60.
 
 **`-f, --filename STRING`**  
 Filename prefix for recorded data. If you supply a value like `filename.csv`, chunks will be saved in files called `filename.n.SOURCE.csv`, where "n" is the chunk number and "SOURCE" is the one of "ACC", "EEG", "GYRO", or "PPG". By default, "filename" is the datetime of the recording in YYYY-mm-dd_HH-MM-SS format.
@@ -45,10 +45,10 @@ By default, a stability check is conducted after a connection is established. Th
 **`-t, --test`**  
 By default, data is saved in the `data/input` directory. If this flag is provided, data is stored in the `data/test` directory instead.
 
-**`-c, --acc`**  
+**`--acc`**  
 Record accelerometer measurements
 
-**`-g, --gyro`**  
+**`--gyro`**  
 Record gyroscope measurements
 
 **`--ppg`**  
