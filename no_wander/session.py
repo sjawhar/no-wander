@@ -8,15 +8,24 @@ from psychopy import core, event, sound, visual
 from pylsl import StreamInfo, StreamOutlet, IRREGULAR_RATE
 import numpy as np
 
+from .features import preprocess_data_test
+from .predict import (
+    predict_distraction,
+    read_prediction_window,
+    update_prediction_window,
+)
 from .record import monitor_signals, record_signals
 from .stream import start_stream
 from .constants import (
     DIR_ASSETS,
     EVENT_NEW_SEGMENT,
+    EVENT_PREDICTION,
     EVENT_RECORD_CHUNK_START,
     EVENT_SESSION_END,
     EVENT_STREAMING_ERROR,
     EVENT_STREAMING_RESTARTED,
+    MARKER_PRED_DISTRACTION,
+    MARKER_PRED_FOCUS,
     MARKER_PROBE,
     MARKER_SYNC,
     MARKER_USER_FOCUS,
@@ -126,6 +135,30 @@ def get_monitor_message_handler(sources, model, preprocessor, confidence_thresho
     def _handle(message, marker_outlet):
         nonlocal window_info
         _, source, data_segment, timestamps = message
+        # TODO: merge multiple sources
+        window_info = update_prediction_window(window_info, data_segment)
+
+        window_data = read_prediction_window(window_info, input_shape[0])
+        if window_data is None:
+            return None
+
+        # TODO: Notch filter for A/C noise
+        if preprocessor is not None:
+            window_data = preprocess_data_test(window_data, preprocessor)
+
+        prob = predict_distraction(model, window_data.reshape(1, *input_shape))
+        is_distracted = prob > confidence_threshold
+
+        timestamp = timestamps[-1]
+        marker_outlet.push_sample(
+            [MARKER_PRED_DISTRACTION if is_distracted else MARKER_PRED_FOCUS],
+            timestamp,
+        )
+        message = [EVENT_PREDICTION, prob, is_distracted, timestamp, window_data]
+        logger.debug(message)
+
+        if not is_distracted:
+            return None
 
     return _handle
 
