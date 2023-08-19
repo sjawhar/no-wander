@@ -237,10 +237,9 @@ $RECYCLE.BIN/
 
 .config
 .psychopy3
-data/**/*
-!data/.gitkeep
 models/**/*
 !models/.gitkeep
 notebooks/tmp*.ipynb
 notebooks/*.png
 *.code-workspace
+.venv

@@ -1,10 +1,7 @@
 *
-!no_wander
+!*.dvc
+!no_wander/**/*.py
 !Pipfile
 !Pipfile.lock
 !setup.py
-!test
-**/__pycache__
-**/.ipynb_checkpoints
-**/.pytest_cache
-**/*.pyc
+!test/**/*.py
