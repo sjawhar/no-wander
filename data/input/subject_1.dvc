@@ -1,0 +1,6 @@
+outs:
+- md5: 2d22639e9b06cbf6e175b92fa3eb315e.dir
+  size: 23034684155
+  nfiles: 16107
+  hash: md5
+  path: subject_1
